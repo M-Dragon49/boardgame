@@ -115,7 +115,7 @@
 <div class="container">
     <div id="view-login" class="glass">
         <h1>MA LON ÔN LAI</h1>
-        <p style="text-align: center; color:#94a3b8; font-size: 14px;">AI Bot Thông Minh - Đa nhiệm ổn định</p>
+        <p style="text-align: center; color:#94a3b8; font-size: 14px;">AI Bot Thông Minh - Bản vá độ trễ mạng</p>
         <input type="text" id="in-room" placeholder="Mã phòng (vd: VIP1, ROOM2...)">
         <input type="text" id="in-name" placeholder="Tên của bạn">
         <button onclick="handleEntry('join')">VÀO PHÒNG</button>
@@ -266,8 +266,16 @@
 
     function joinGame() {
         const pRef = db.ref('rooms/' + roomID + '/players/' + myID);
+        
+        // CƠ CHẾ AUTO-RECONNECT
+        db.ref('.info/connected').on('value', snap => {
+            if (snap.val() === true) {
+                pRef.update({ offline: false });
+                pRef.onDisconnect().update({ offline: true });
+            }
+        });
+
         pRef.set({ id: myID, name: myName, joinedAt: Date.now(), offline: false, bot: false });
-        pRef.onDisconnect().update({ offline: true });
 
         document.getElementById('view-login').classList.add('hidden');
         document.getElementById('view-lobby').classList.remove('hidden');
@@ -285,7 +293,6 @@
                 if (p.id === myID) amIHere = true;
             });
             
-            // Xử lý đá văng
             if (!amIHere && document.getElementById('view-login').classList.contains('hidden')) {
                 alert("Bạn đã bị kick khỏi phòng hoặc phòng đã giải tán!");
                 localStorage.removeItem('avalon_room');
@@ -294,12 +301,9 @@
             }
 
             players.sort((a, b) => a.joinedAt - b.joinedAt);
-            
-            // Bộ lọc Trưởng phòng (Phải là người thật)
             const realPlayers = players.filter(p => !p.bot);
             isHostGlobal = (realPlayers.length > 0 && realPlayers[0].id === myID);
             
-            // Hiển thị sĩ số
             document.getElementById('player-count').innerText = players.length;
             
             const lobbyList = document.getElementById('lobby-list');
@@ -307,10 +311,8 @@
                 let status = p.offline && !p.bot ? '<span class="red-text" style="font-size:12px;"> (Offline)</span>' : '';
                 let isThisHost = realPlayers.length > 0 && p.id === realPlayers[0].id;
                 let icon = p.bot ? '🤖' : (isThisHost ? '👑' : '👤');
-                
                 let kickBtn = (isHostGlobal && p.id !== myID) 
-                    ? `<button class="btn-red" style="width: auto; padding: 6px 12px; margin: 0; font-size: 11px;" onclick="kickPlayer('${p.id}')">KICK</button>` 
-                    : '';
+                    ? `<button class="btn-red" style="width: auto; padding: 6px 12px; margin: 0; font-size: 11px;" onclick="kickPlayer('${p.id}')">KICK</button>` : '';
 
                 return `<div class="lobby-player">
                     <span>${icon} <b>${p.name}</b> ${p.id === myID ? '(Bạn)' : ''} ${status}</span>
@@ -327,7 +329,6 @@
                 document.getElementById('host-msg').innerText = "Bạn là Trưởng phòng";
                 hostControls.classList.remove('hidden');
                 
-                // Logic đổi màu hiển thị tự động cho Nút Bắt Đầu
                 if (players.length < 5) {
                     btnStart.disabled = true;
                     btnStart.innerText = `BẮT ĐẦU GAME (Cần thêm ${5 - players.length} người)`;
@@ -345,11 +346,9 @@
                     btnStart.style.color = '#000';
                 }
                 
-                // Nút Thêm Bot
                 btnAddBot.disabled = players.length >= 10;
                 btnAddBot.style.background = players.length >= 10 ? '#475569' : 'var(--blue)';
                 btnAddBot.style.color = players.length >= 10 ? '#cbd5e1' : '#fff';
-                
                 waitMsg.classList.add('hidden');
             } else {
                 document.getElementById('host-msg').innerText = "Trưởng phòng: " + (realPlayers[0]?.name || '...');
@@ -367,8 +366,7 @@
                     clearTimeout(botTimeout);
                     botTimeout = setTimeout(() => runBotLogic(s), 2000); 
                 }
-            } 
-            else {
+            } else {
                 document.getElementById('view-game').classList.add('hidden');
                 document.getElementById('view-lobby').classList.remove('hidden');
             }
@@ -387,6 +385,14 @@
 
     function runBotLogic(s) {
         if (!isHostGlobal || !s) return;
+        
+        // Bọc bảo vệ dữ liệu chống Firebase xóa mảng trống
+        s.votes = s.votes || {};
+        s.missions = s.missions || {};
+        s.team = s.team || [];
+        s.points = s.points || [];
+        s.ladyHistory = s.ladyHistory || [];
+
         let changed = false;
         const phase = s.phase;
 
@@ -398,14 +404,9 @@
                 let team = [kId];
                 let pool = [...s.order].filter(id => id !== kId);
                 
-                if (myRole === 'Merlin') {
-                    pool = pool.filter(id => !['Assassin','Morgana','Oberon'].includes(s.roles[id]));
-                }
-                
+                if (myRole === 'Merlin') pool = pool.filter(id => !['Assassin','Morgana','Oberon'].includes(s.roles[id]));
                 pool = pool.sort(() => Math.random() - 0.5);
-                for(let i=0; i<pool.length; i++) {
-                    if (team.length < max) team.push(pool[i]);
-                }
+                for(let i=0; i<pool.length; i++) { if (team.length < max) team.push(pool[i]); }
                 
                 s.team = team;
                 s.phase = 'VOTE'; s.votes = {}; s.showVotes = false;
@@ -421,13 +422,10 @@
                     let isOnTeam = s.team.includes(id);
                     let vote = 'NO';
 
-                    if (s.failedVotes >= 4) {
-                        vote = isRed ? 'NO' : 'YES';
-                    } else {
-                        if (isRed) {
-                            if (evilsOnTeam > 0) vote = Math.random() < 0.85 ? 'YES' : 'NO';
-                            else vote = Math.random() < 0.2 ? 'YES' : 'NO';
-                        } else {
+                    if (s.failedVotes >= 4) { vote = isRed ? 'NO' : 'YES'; } 
+                    else {
+                        if (isRed) { vote = (evilsOnTeam > 0) ? (Math.random() < 0.85 ? 'YES' : 'NO') : (Math.random() < 0.2 ? 'YES' : 'NO'); } 
+                        else {
                             if (myRole === 'Merlin' && evilsOnTeam > 0) vote = 'NO';
                             else if (isOnTeam) vote = Math.random() < 0.9 ? 'YES' : 'NO'; 
                             else vote = Math.random() < 0.4 ? 'YES' : 'NO';
@@ -444,10 +442,7 @@
                 if (roomPlayersObj[id]?.bot && !s.missions[id]) {
                     const isRed = ['Assassin','Morgana','Mordred','Oberon'].includes(s.roles[id]);
                     let action = 'WIN';
-                    if (isRed) {
-                        if (s.round === 1 && Math.random() < 0.3) action = 'WIN';
-                        else action = 'FAIL';
-                    }
+                    if (isRed) action = (s.round === 1 && Math.random() < 0.3) ? 'WIN' : 'FAIL';
                     s.missions[id] = action;
                     changed = true;
                 }
@@ -482,7 +477,39 @@
         
         if (changed) sync(s);
     }
-    // ------------------------------------
+
+    // --- FIX TRIỆT ĐỂ LỖI KHÔNG BẤM ĐƯỢC START GAME ---
+    function startGame() {
+        if (!isHostGlobal) return;
+        
+        // Lấy trực tiếp danh sách từ bộ nhớ tạm trên giao diện
+        // Khắc phục 100% tình trạng mạng lag khiến đếm thiếu người
+        const ps = Object.values(roomPlayersObj).sort((a, b) => a.joinedAt - b.joinedAt);
+        const n = ps.length;
+        
+        if(n < 5 || n > 10) return alert(`Phòng hiện tại có ${n} người. Vui lòng kiểm tra lại!`);
+        
+        const c = CONFIG[n] || CONFIG[10];
+        let rolesPool = [...c.r]; 
+        if (n > 10) for(let i=10; i<n; i++) rolesPool.push('Villager');
+        
+        const roles = rolesPool.sort(() => Math.random() - 0.5);
+        const order = ps.map(p => p.id).sort(() => Math.random() - 0.5);
+        const kIdx = Math.floor(Math.random() * n);
+        const lIdx = (kIdx - 1 + n) % n;
+
+        sync({ 
+            names: ps.reduce((a,p)=>({...a,[p.id]:p.name}),{}), 
+            order: order, 
+            roles: order.reduce((a,id,i)=>({...a,[id]:roles[i]}),{}), 
+            kingIdx: kIdx, 
+            ladyIdx: lIdx, 
+            ladyHistory: [order[lIdx]],
+            round: 1, points: [], failedVotes: 0, phase: 'SELECT', 
+            team: [], votes: {}, missions: {}, showVotes: false,
+            lastMissionDetails: "", lastResult: ""
+        });
+    }
 
     function kickPlayer(targetID) {
         if (!roomID) return;
@@ -497,47 +524,14 @@
         window.location.reload();
     }
 
-    function startGame() {
-        db.ref('rooms/' + roomID + '/players').once('value', snap => {
-            const ps = []; snap.forEach(c => ps.push(c.val()));
-            const n = ps.length;
-            if(n < 5 || n > 10) return alert(`Phòng hiện tại mới có ${n} người chơi. Vui lòng thêm đủ 5 - 10 người!`);
-            
-            const c = CONFIG[n] || CONFIG[10];
-            let rolesPool = [...c.r]; 
-            if (n > 10) for(let i=10; i<n; i++) rolesPool.push('Villager');
-            
-            const roles = rolesPool.sort(() => Math.random() - 0.5);
-            const order = ps.map(p => p.id).sort(() => Math.random() - 0.5);
-            const kIdx = Math.floor(Math.random() * n);
-            const lIdx = (kIdx - 1 + n) % n;
-
-            sync({ 
-                names: ps.reduce((a,p)=>({...a,[p.id]:p.name}),{}), 
-                order, 
-                roles: order.reduce((a,id,i)=>({...a,[id]:roles[i]}),{}), 
-                kingIdx: kIdx, 
-                ladyIdx: lIdx, 
-                ladyHistory: [order[lIdx]],
-                round: 1, points: [], failedVotes: 0, phase: 'SELECT', 
-                team: [], votes: {}, missions: {}, showVotes: false,
-                lastMissionDetails: "", lastResult: ""
-            });
-        });
-    }
-
+    // --- FIX KHÔNG PHỤ THUỘC MẠNG KHI CHƠI LẠI VÁN MỚI ---
     function resetGameForLobby() {
         if (state) {
-            db.ref('rooms/' + roomID + '/players').once('value', snap => {
-                let players = []; snap.forEach(c => players.push(c.val()));
-                players.sort((a, b) => a.joinedAt - b.joinedAt);
-                const realPlayers = players.filter(p => !p.bot);
-                if(realPlayers.length > 0 && realPlayers[0].id === myID) {
-                    db.ref('rooms/' + roomID + '/state').remove();
-                } else {
-                    alert("Chỉ Trưởng phòng mới có thể bắt đầu ván mới!");
-                }
-            });
+            if (isHostGlobal) {
+                db.ref('rooms/' + roomID + '/state').remove();
+            } else {
+                alert("Chỉ Trưởng phòng mới có thể bắt đầu ván mới!");
+            }
         }
     }
 
@@ -545,6 +539,13 @@
     let killTarget = null;
 
     function updateUI(s) {
+        // Bọc bảo vệ dữ liệu chống Firebase xóa mảng trống
+        s.votes = s.votes || {};
+        s.missions = s.missions || {};
+        s.team = s.team || [];
+        s.points = s.points || [];
+        s.ladyHistory = s.ladyHistory || [];
+        
         state = s; 
         document.getElementById('view-lobby').classList.add('hidden'); 
         document.getElementById('view-game').classList.remove('hidden');
