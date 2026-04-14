@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ma Lon Online (Pro Edition)</title>
+    <title>Ma Lon Ôn Lai</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
     <style>
@@ -48,7 +48,7 @@
             margin-bottom: 10px; text-transform: uppercase;
         }
         button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.15); }
-        button:disabled { background: #475569 !important; cursor: not-allowed; opacity: 0.6; }
+        button:disabled { cursor: not-allowed; opacity: 0.7; }
         
         .btn-gold { background: var(--gold); color: #000; }
         .btn-red { background: var(--red); color: white; }
@@ -83,6 +83,7 @@
         
         .player-node span { width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; }
         .player-node.me { border-color: #fff; z-index: 5; box-shadow: 0 0 15px rgba(255,255,255,0.4); }
+        .player-node.bot { border-style: dashed; }
         .player-node.selected { background: var(--blue); border-color: #fff; transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 20px var(--blue); z-index: 6; }
         .player-node.offline { opacity: 0.5; border-color: var(--red); border-style: dashed; }
         .player-node.offline::after { content: '🔌'; position: absolute; font-size: 20px; z-index: 20; top: 50%; left: 50%; transform: translate(-50%, -50%); }
@@ -113,8 +114,8 @@
 
 <div class="container">
     <div id="view-login" class="glass">
-        <h1>AVALON BY NHAT</h1>
-        <p style="text-align: center; color:#94a3b8; font-size: 14px;">Phiên bản Pro - Đa nhiệm ổn định</p>
+        <h1>MA LON ÔN LAI</h1>
+        <p style="text-align: center; color:#94a3b8; font-size: 14px;">AI Bot Thông Minh - Đa nhiệm ổn định</p>
         <input type="text" id="in-room" placeholder="Mã phòng (vd: VIP1, ROOM2...)">
         <input type="text" id="in-name" placeholder="Tên của bạn">
         <button onclick="handleEntry('join')">VÀO PHÒNG</button>
@@ -125,9 +126,14 @@
         <h2 id="room-title">Phòng: </h2>
         <p id="host-msg" style="color: var(--gold); font-size: 14px; font-weight: bold; text-align: center;"></p>
         
-        <div id="lobby-list" style="margin: 20px 0; max-height: 300px; overflow-y: auto;"></div>
+        <p style="text-align:center; color:#94a3b8; font-size:14px; margin-top: -5px;">Sĩ số hiện tại: <b id="player-count" style="color:var(--gold); font-size: 16px;">0</b>/10</p>
         
-        <button id="btn-start" class="btn-gold hidden" onclick="startGame()">BẮT ĐẦU GAME (5-10 Người)</button>
+        <div id="lobby-list" style="margin: 10px 0 20px 0; max-height: 300px; overflow-y: auto;"></div>
+        
+        <div id="host-controls" class="hidden">
+            <button class="btn-blue" id="btn-add-bot" onclick="addBot()">+ THÊM BOT (AI)</button>
+            <button id="btn-start" onclick="startGame()">BẮT ĐẦU GAME</button>
+        </div>
         <p id="wait-msg" class="hidden" style="text-align:center; font-style: italic; font-size: 13px; color: #888;">Đợi Host bắt đầu game...</p>
         <button class="btn-gray" onclick="leaveRoom()">THOÁT PHÒNG</button>
     </div>
@@ -200,7 +206,7 @@
 </div>
 
 <script>
-    // --- CẤU HÌNH FIREBASE GIỮ NGUYÊN ---
+    // --- CẤU HÌNH FIREBASE ---
     const firebaseConfig = {
         apiKey: "AIzaSyAFx9KTvVic2jxrT28Zx9wLIfBABISXnTk",
         authDomain: "avalon-6951b.firebaseapp.com",
@@ -214,7 +220,6 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
-    // Hệ thống chống mất kết nối bằng LocalStorage
     let myID = localStorage.getItem('avalon_id');
     if (!myID) {
         myID = 'p_' + Math.random().toString(36).substr(2, 6);
@@ -224,17 +229,18 @@
     let myName = localStorage.getItem('avalon_name') || '';
     let roomID = localStorage.getItem('avalon_room') || '';
     let state = null;
-    let roomPlayersObj = {}; // Lưu trữ object người chơi để track offline/online
+    let roomPlayersObj = {}; 
+    let isHostGlobal = false;
+    let botTimeout = null;
 
     window.onload = () => {
         if (roomID && myName) {
             document.getElementById('in-room').value = roomID;
             document.getElementById('in-name').value = myName;
-            joinGame(); // Tự động rejoin nếu tải lại trang
+            joinGame(); 
         }
     }
 
-    // Cấu hình chuẩn Avalon
     const CONFIG = {
         5: { q:[2,3,2,3,3], r:['Assassin','Morgana','Merlin','Percival','Villager'] },
         6: { q:[2,3,4,3,4], r:['Assassin','Morgana','Merlin','Percival','Villager','Villager'] },
@@ -260,8 +266,7 @@
 
     function joinGame() {
         const pRef = db.ref('rooms/' + roomID + '/players/' + myID);
-        // Thay vì remove() khi disconnect, ta update trạng thái offline để hỗ trợ đa nhiệm
-        pRef.set({ id: myID, name: myName, joinedAt: Date.now(), offline: false });
+        pRef.set({ id: myID, name: myName, joinedAt: Date.now(), offline: false, bot: false });
         pRef.onDisconnect().update({ offline: true });
 
         document.getElementById('view-login').classList.add('hidden');
@@ -271,46 +276,219 @@
         db.ref('rooms/' + roomID + '/players').on('value', snap => {
             let players = [];
             roomPlayersObj = {};
+            let amIHere = false;
+
             snap.forEach(c => { 
                 let p = c.val(); 
                 players.push(p); 
                 roomPlayersObj[p.id] = p;
+                if (p.id === myID) amIHere = true;
             });
             
+            // Xử lý đá văng
+            if (!amIHere && document.getElementById('view-login').classList.contains('hidden')) {
+                alert("Bạn đã bị kick khỏi phòng hoặc phòng đã giải tán!");
+                localStorage.removeItem('avalon_room');
+                window.location.reload();
+                return;
+            }
+
             players.sort((a, b) => a.joinedAt - b.joinedAt);
             
+            // Bộ lọc Trưởng phòng (Phải là người thật)
+            const realPlayers = players.filter(p => !p.bot);
+            isHostGlobal = (realPlayers.length > 0 && realPlayers[0].id === myID);
+            
+            // Hiển thị sĩ số
+            document.getElementById('player-count').innerText = players.length;
+            
             const lobbyList = document.getElementById('lobby-list');
-            lobbyList.innerHTML = players.map((p, idx) => {
-                let status = p.offline ? '<span class="red-text" style="font-size:12px;"> (Offline)</span>' : '';
+            lobbyList.innerHTML = players.map((p) => {
+                let status = p.offline && !p.bot ? '<span class="red-text" style="font-size:12px;"> (Offline)</span>' : '';
+                let isThisHost = realPlayers.length > 0 && p.id === realPlayers[0].id;
+                let icon = p.bot ? '🤖' : (isThisHost ? '👑' : '👤');
+                
+                let kickBtn = (isHostGlobal && p.id !== myID) 
+                    ? `<button class="btn-red" style="width: auto; padding: 6px 12px; margin: 0; font-size: 11px;" onclick="kickPlayer('${p.id}')">KICK</button>` 
+                    : '';
+
                 return `<div class="lobby-player">
-                    <span>${idx === 0 ? '👑' : '👤'} <b>${p.name}</b> ${p.id === myID ? '(Bạn)' : ''} ${status}</span>
+                    <span>${icon} <b>${p.name}</b> ${p.id === myID ? '(Bạn)' : ''} ${status}</span>
+                    ${kickBtn}
                 </div>`;
             }).join('');
 
-            const isHost = (players.length > 0 && players[0].id === myID);
+            const hostControls = document.getElementById('host-controls');
             const btnStart = document.getElementById('btn-start');
+            const btnAddBot = document.getElementById('btn-add-bot');
             const waitMsg = document.getElementById('wait-msg');
 
-            if (isHost) {
+            if (isHostGlobal) {
                 document.getElementById('host-msg').innerText = "Bạn là Trưởng phòng";
-                btnStart.classList.remove('hidden');
-                btnStart.disabled = players.length < 5 || players.length > 10;
+                hostControls.classList.remove('hidden');
+                
+                // Logic đổi màu hiển thị tự động cho Nút Bắt Đầu
+                if (players.length < 5) {
+                    btnStart.disabled = true;
+                    btnStart.innerText = `BẮT ĐẦU GAME (Cần thêm ${5 - players.length} người)`;
+                    btnStart.style.background = '#475569';
+                    btnStart.style.color = '#cbd5e1';
+                } else if (players.length > 10) {
+                    btnStart.disabled = true;
+                    btnStart.innerText = `BẮT ĐẦU GAME (Dư ${players.length - 10} người)`;
+                    btnStart.style.background = '#475569';
+                    btnStart.style.color = '#cbd5e1';
+                } else {
+                    btnStart.disabled = false;
+                    btnStart.innerText = "BẮT ĐẦU GAME";
+                    btnStart.style.background = 'var(--gold)';
+                    btnStart.style.color = '#000';
+                }
+                
+                // Nút Thêm Bot
+                btnAddBot.disabled = players.length >= 10;
+                btnAddBot.style.background = players.length >= 10 ? '#475569' : 'var(--blue)';
+                btnAddBot.style.color = players.length >= 10 ? '#cbd5e1' : '#fff';
+                
                 waitMsg.classList.add('hidden');
             } else {
-                document.getElementById('host-msg').innerText = "Trưởng phòng: " + (players[0]?.name || '...');
-                btnStart.classList.add('hidden');
+                document.getElementById('host-msg').innerText = "Trưởng phòng: " + (realPlayers[0]?.name || '...');
+                hostControls.classList.add('hidden');
                 waitMsg.classList.remove('hidden');
             }
         });
 
         db.ref('rooms/' + roomID + '/state').on('value', snap => { 
-            if(snap.val()) updateUI(JSON.parse(snap.val())); 
+            if(snap.val()) {
+                const s = JSON.parse(snap.val());
+                updateUI(s);
+                
+                if (isHostGlobal) {
+                    clearTimeout(botTimeout);
+                    botTimeout = setTimeout(() => runBotLogic(s), 2000); 
+                }
+            } 
             else {
-                // Quay về sảnh nếu state bị reset
                 document.getElementById('view-game').classList.add('hidden');
                 document.getElementById('view-lobby').classList.remove('hidden');
             }
         });
+    }
+
+    // --- BỘ NÃO THÔNG MINH CHO BOT (AI) ---
+    function addBot() {
+        if (!roomID || !isHostGlobal) return;
+        const botID = 'bot_' + Math.random().toString(36).substr(2, 5);
+        const botName = 'Bot ' + botID.substr(-3).toUpperCase();
+        db.ref('rooms/' + roomID + '/players/' + botID).set({
+            id: botID, name: botName, joinedAt: Date.now() + Math.random(), offline: false, bot: true
+        });
+    }
+
+    function runBotLogic(s) {
+        if (!isHostGlobal || !s) return;
+        let changed = false;
+        const phase = s.phase;
+
+        if (phase === 'SELECT') {
+            const kId = s.order[s.kingIdx];
+            if (roomPlayersObj[kId]?.bot) {
+                let max = (CONFIG[s.order.length] || CONFIG[10]).q[s.round-1];
+                let myRole = s.roles[kId];
+                let team = [kId];
+                let pool = [...s.order].filter(id => id !== kId);
+                
+                if (myRole === 'Merlin') {
+                    pool = pool.filter(id => !['Assassin','Morgana','Oberon'].includes(s.roles[id]));
+                }
+                
+                pool = pool.sort(() => Math.random() - 0.5);
+                for(let i=0; i<pool.length; i++) {
+                    if (team.length < max) team.push(pool[i]);
+                }
+                
+                s.team = team;
+                s.phase = 'VOTE'; s.votes = {}; s.showVotes = false;
+                changed = true;
+            }
+        } 
+        else if (phase === 'VOTE') {
+            s.order.forEach(id => {
+                if (roomPlayersObj[id]?.bot && !s.votes[id]) {
+                    let myRole = s.roles[id];
+                    let isRed = ['Assassin','Morgana','Mordred','Oberon'].includes(myRole);
+                    let evilsOnTeam = s.team.filter(t => ['Assassin','Morgana','Mordred','Oberon'].includes(s.roles[t])).length;
+                    let isOnTeam = s.team.includes(id);
+                    let vote = 'NO';
+
+                    if (s.failedVotes >= 4) {
+                        vote = isRed ? 'NO' : 'YES';
+                    } else {
+                        if (isRed) {
+                            if (evilsOnTeam > 0) vote = Math.random() < 0.85 ? 'YES' : 'NO';
+                            else vote = Math.random() < 0.2 ? 'YES' : 'NO';
+                        } else {
+                            if (myRole === 'Merlin' && evilsOnTeam > 0) vote = 'NO';
+                            else if (isOnTeam) vote = Math.random() < 0.9 ? 'YES' : 'NO'; 
+                            else vote = Math.random() < 0.4 ? 'YES' : 'NO';
+                        }
+                    }
+                    s.votes[id] = vote;
+                    changed = true;
+                }
+            });
+            if (changed) { state = s; processVotes(); return; }
+        } 
+        else if (phase === 'MISSION') {
+            s.team.forEach(id => {
+                if (roomPlayersObj[id]?.bot && !s.missions[id]) {
+                    const isRed = ['Assassin','Morgana','Mordred','Oberon'].includes(s.roles[id]);
+                    let action = 'WIN';
+                    if (isRed) {
+                        if (s.round === 1 && Math.random() < 0.3) action = 'WIN';
+                        else action = 'FAIL';
+                    }
+                    s.missions[id] = action;
+                    changed = true;
+                }
+            });
+            if (changed) { state = s; processMissions(); return; }
+        } 
+        else if (phase === 'LADY') {
+            const lId = s.order[s.ladyIdx];
+            if (roomPlayersObj[lId]?.bot) {
+                let pool = s.order.filter(x => !s.ladyHistory.includes(x) && x !== lId);
+                let targetId = pool[Math.floor(Math.random() * pool.length)];
+                
+                s.lastMissionDetails += `<br><span style="color:var(--gold)">Công khai: ${s.names[lId]} (Bot) soi Lady lên ${s.names[targetId]}</span>`;
+                s.ladyIdx = s.order.indexOf(targetId);
+                s.ladyHistory.push(targetId);
+                s.phase = 'SELECT'; s.team = []; s.votes = {}; s.showVotes = false;
+                changed = true;
+            }
+        } 
+        else if (phase === 'ASSASSIN') {
+            const aId = s.order.find(x => s.roles[x] === 'Assassin');
+            if (roomPlayersObj[aId]?.bot) {
+                let pool = s.order.filter(x => !['Assassin','Morgana','Mordred','Oberon'].includes(s.roles[x]));
+                let targetId = pool[Math.floor(Math.random() * pool.length)];
+                
+                s.lastMissionDetails += `<br><span class="red-text">Công khai: ${s.names[aId]} (Bot Sát thủ) đã ám sát ${s.names[targetId]}</span>`;
+                s.lastResult = (s.roles[targetId] === 'Merlin') ? 'ASSASSIN_WIN' : 'GOOD_WIN';
+                s.phase = 'RESULT';
+                changed = true;
+            }
+        }
+        
+        if (changed) sync(s);
+    }
+    // ------------------------------------
+
+    function kickPlayer(targetID) {
+        if (!roomID) return;
+        if (confirm("Bạn có chắc chắn muốn kick người này (hoặc xóa Bot)?")) {
+            db.ref('rooms/' + roomID + '/players/' + targetID).remove();
+        }
     }
 
     function leaveRoom() {
@@ -323,7 +501,7 @@
         db.ref('rooms/' + roomID + '/players').once('value', snap => {
             const ps = []; snap.forEach(c => ps.push(c.val()));
             const n = ps.length;
-            if(n < 5 || n > 10) return alert("Cần 5-10 người chơi!");
+            if(n < 5 || n > 10) return alert(`Phòng hiện tại mới có ${n} người chơi. Vui lòng thêm đủ 5 - 10 người!`);
             
             const c = CONFIG[n] || CONFIG[10];
             let rolesPool = [...c.r]; 
@@ -350,12 +528,11 @@
 
     function resetGameForLobby() {
         if (state) {
-            const myIdx = state.order.indexOf(myID);
-            // Chỉ Host (hoặc người đầu tiên trong danh sách) mới có quyền reset bàn
             db.ref('rooms/' + roomID + '/players').once('value', snap => {
                 let players = []; snap.forEach(c => players.push(c.val()));
                 players.sort((a, b) => a.joinedAt - b.joinedAt);
-                if(players.length > 0 && players[0].id === myID) {
+                const realPlayers = players.filter(p => !p.bot);
+                if(realPlayers.length > 0 && realPlayers[0].id === myID) {
                     db.ref('rooms/' + roomID + '/state').remove();
                 } else {
                     alert("Chỉ Trưởng phòng mới có thể bắt đầu ván mới!");
@@ -375,7 +552,6 @@
         const n = s.order.length;
         const qC = (CONFIG[n] || CONFIG[10]).q;
         
-        // Render Bảng nhiệm vụ
         document.getElementById('quest-board').innerHTML = qC.map((num, i) => {
             let cls = (s.round === i+1) ? 'current' : '';
             if(s.points[i] === 'WIN') cls = 'win'; 
@@ -385,7 +561,6 @@
         
         document.getElementById('failed-bar').innerText = `Vote đội hình thất bại: ${s.failedVotes}/5 lần`;
         
-        // Render Chỉ dẫn
         const failsNeeded = (n >= 7 && s.round === 4) ? 2 : 1;
         document.getElementById('quest-rule').innerHTML = `
             <b>CHỈ DẪN VÒNG ${s.round}:</b><br><br>
@@ -393,7 +568,6 @@
             <span class="red-text">🔥 PHE ĐỎ: Cần ít nhất ${failsNeeded} phiếu Thất bại để phá.</span>
         `;
 
-        // Render Kết quả round trước
         const missionResultBox = document.getElementById('mission-result-display');
         if (s.lastMissionDetails && s.lastMissionDetails.trim() !== "") {
             missionResultBox.innerHTML = s.lastMissionDetails;
@@ -404,7 +578,6 @@
 
         renderCircle();
 
-        // Xử lý Giao diện Vai Trò Bí Mật
         const myRole = s.roles[myID];
         const isRed = ['Assassin','Morgana','Mordred','Oberon'].includes(myRole);
         let rInfo = `VAI TRÒ BÍ MẬT:<br><b class="${isRed?'red-text':'blue-text'}" style="font-size:24px;">${myRole||'Khán giả'}</b><br><br>`;
@@ -425,13 +598,11 @@
         }
         document.getElementById('role-text').innerHTML = rInfo;
 
-        // Reset các nút ấn
         ['phase-select','phase-vote','phase-mission','phase-lady','phase-assassin','phase-result'].forEach(p => {
             document.getElementById(p).classList.add('hidden');
             document.querySelectorAll(`#${p} button`).forEach(b => { if(b.id !== 'btn-next') b.disabled = false; });
         });
 
-        // Thanh trạng thái Status
         let activeName = "";
         if (s.phase === 'SELECT' || s.phase === 'VOTE') activeName = "Vua " + s.names[s.order[s.kingIdx]];
         else if (s.phase === 'MISSION') activeName = "Đội làm nhiệm vụ";
@@ -442,7 +613,6 @@
         }
         document.getElementById('game-status').innerHTML = `Đang đợi hành động của: <b style="color:var(--gold)">${activeName}</b>`;
 
-        // Render Khung thao tác theo Phase
         if(s.phase === 'SELECT' && myID === s.order[s.kingIdx]) {
             document.getElementById('phase-select').classList.remove('hidden');
             document.getElementById('num-needed').innerText = qC[s.round-1];
@@ -512,7 +682,8 @@
             div.className = 'player-node';
             
             if (id === myID) div.classList.add('me');
-            if (roomPlayersObj[id] && roomPlayersObj[id].offline) div.classList.add('offline');
+            if (roomPlayersObj[id] && roomPlayersObj[id].bot) div.classList.add('bot');
+            if (roomPlayersObj[id] && roomPlayersObj[id].offline && !roomPlayersObj[id].bot) div.classList.add('offline');
             
             const isK = i === state.kingIdx, isL = i === state.ladyIdx;
             if (state.team.includes(id)) div.classList.add('selected');
