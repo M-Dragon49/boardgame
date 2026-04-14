@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trò chơi Ma Lon - Dành cho con nghiện</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+    <style>
+        :root {
+            --blue: #00d2ff; --red: #ff416c; --gold: #fbc02d; --dark: #0b0e14;
+            --card: #161b22; --border: #30363d; --text: #c9d1d9;
+            --neon-blue: 0 0 10px #00d2ff; --neon-red: 0 0 10px #ff416c;
+        }
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; background: var(--dark); color: var(--text); 
+            margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh;
+        }
+        .container { width: 100%; max-width: 600px; padding: 15px; }
+        .card { 
+            background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5); margin-bottom: 20px; position: relative;
+        }
+        h1, h2, h3 { text-align: center; margin: 10px 0; }
+        .gold-text { color: var(--gold); text-shadow: 0 0 5px rgba(251,192,45,0.5); }
+        .red-text { color: var(--red); }
+        .blue-text { color: var(--blue); }
+
+        /* Button styles */
+        button { 
+            width: 100%; padding: 12px; margin: 5px 0; border-radius: 12px; border: none;
+            font-size: 15px; font-weight: bold; cursor: pointer; background: #238636; color: white;
+        }
+        button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
+        button:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+        .btn-red { background: var(--red); }
+        .btn-gold { background: var(--gold); color: #111; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+        .btn-exit { position: absolute; top: 10px; right: 10px; width: auto; padding: 5px 15px; font-size: 12px; background: #30363d; }
+
+        /* Game Board */
+        .quest-board { display: flex; justify-content: center; gap: 10px; margin: 20px 0; }
+        .quest-slot { 
+            width: 50px; height: 50px; border-radius: 50%; border: 2px solid #30363d;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 14px; background: #0d1117; position: relative;
+        }
+        .quest-slot.current { border-color: var(--gold); box-shadow: var(--neon-blue); transform: scale(1.1); }
+        .quest-slot.win { background: var(--blue); border-color: white; color: #000; }
+        .quest-slot.fail { background: var(--red); border-color: white; color: white; }
+        .quest-req { font-size: 9px; opacity: 0.8; margin-top: 2px; }
+
+        /* Legend */
+        .legend { display: flex; justify-content: space-around; font-size: 12px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; margin-bottom: 10px; }
+
+        /* Player Circle */
+        .circle-container { position: relative; width: 320px; height: 320px; margin: 40px auto; border-radius: 50%; border: 1px dashed #30363d; }
+        .player-node { 
+            position: absolute; width: 70px; height: 70px; background: #161b22; border: 2px solid #30363d;
+            border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 11px; font-weight: bold; transition: 0.5s; z-index: 2; text-align: center; line-height: 1.2;
+        }
+        .player-node.me { border-color: white; border-width: 3px; }
+        .player-node.king { border-color: var(--gold); box-shadow: var(--neon-blue); }
+        .player-node.king::before { content: '👑'; position: absolute; top: -20px; font-size: 20px; }
+        .player-node.lady { border-color: var(--blue); box-shadow: 0 0 10px var(--blue); }
+        .player-node.lady::after { content: '💧'; position: absolute; bottom: -20px; font-size: 18px; }
+        .player-node.selected { background: #238636; border-color: #aff5b4; }
+        .vote-pop { position: absolute; top: -10px; right: -10px; width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; border: 2px solid white; z-index: 3; }
+
+        /* Lobby list */
+        .player-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border); }
+        .kick-btn { background: var(--red); width: auto; padding: 4px 10px; font-size: 11px; border-radius: 5px; cursor: pointer;}
+
+        .hidden { display: none !important; }
+        #log-box { font-size: 13px; color: #8b949e; max-height: 80px; overflow-y: auto; margin-top: 10px; font-style: italic; border-left: 2px solid var(--gold); padding-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="view-login" class="card">
+        <h1 class="gold-text">MA LON ONLINE</h1>
+        <p style="text-align:center; font-size: 13px;">Trò chơi tạo ra dành cho những con nghiện</p>
+        <input style="width:100%; padding:12px; margin:10px 0; border-radius:10px; border:1px solid var(--border); background:#0d1117; color:white; outline:none;" type="text" id="in-room" placeholder="Mã phòng (Nhập SỐ, bỏ trống sẽ tự tạo)">
+        <input style="width:100%; padding:12px; margin:10px 0; border-radius:10px; border:1px solid var(--border); background:#0d1117; color:white; outline:none;" type="text" id="in-name" placeholder="Tên của bạn">
+        <div style="display:flex; gap:10px;">
+            <button type="button" onclick="handleEntry('join')">VÀO PHÒNG</button>
+            <button type="button" class="btn-gold" onclick="handleEntry('create')">TẠO PHÒNG</button>
+        </div>
+    </div>
+
+    <div id="view-lobby" class="hidden card">
+        <button type="button" class="btn-exit" onclick="exitGame()">THOÁT</button>
+        <h2 id="room-title">Phòng: --</h2>
+        <div id="lobby-list" style="margin: 20px 0;"></div>
+        <div id="host-controls" class="hidden">
+            <button type="button" class="btn-outline" onclick="addBot()">+ THÊM MÁY (BOT)</button>
+            <button type="button" id="btn-start" class="btn-gold" onclick="startGame()">BẮT ĐẦU (CẦN 5-10 NGƯỜI)</button>
+        </div>
+        <p id="wait-msg" class="hidden" style="text-align:center; font-size:13px; color:#8b949e;">Đợi chủ phòng bắt đầu...</p>
+    </div>
+
+    <div id="view-game" class="hidden">
+        <div class="quest-board" id="quest-board"></div>
+        <div class="legend">
+            <span>👑 Vua (Chủ tọa)</span>
+            <span>💧 Lady Lake (Soi bài)</span>
+            <span>Bác bỏ: <b id="failed-vote-count">0/5</b></span>
+        </div>
+        <div class="circle-container" id="player-circle"></div>
+        
+        <div id="log-box">Hệ thống: Chào mừng bạn đến với Ma Lon.</div>
+
+        <div class="card">
+            <div id="role-area">
+                <div id="role-text" class="hidden" style="background:#0d1117; padding:15px; border-radius:10px; margin-bottom:10px; border:1px solid var(--gold); line-height:1.5;"></div>
+                <button type="button" class="btn-outline" onclick="toggleRole()">XEM VAI TRÒ</button>
+            </div>
+
+            <div id="game-controls" style="margin-top:15px;">
+                <div id="phase-select" class="hidden">
+                    <p id="select-msg" style="text-align:center; font-weight:bold;"></p>
+                    <div id="select-list"></div>
+                    <button type="button" class="btn-gold" id="btn-submit-team" onclick="submitTeam()">XÁC NHẬN ĐỘI HÌNH</button>
+                </div>
+
+                <div id="phase-vote" class="hidden">
+                    <p style="text-align:center; font-weight:bold;">Bạn có đồng ý đội hình này?</p>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" onclick="castVote('YES')">ĐỒNG Ý (✔)</button>
+                        <button type="button" class="btn-red" onclick="castVote('NO')">BÁC BỎ (✖)</button>
+                    </div>
+                </div>
+
+                <div id="phase-mission" class="hidden">
+                    <p style="text-align:center; font-weight:bold;">Làm nhiệm vụ bí mật:</p>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" onclick="castMission('WIN')">THÀNH CÔNG</button>
+                        <button type="button" id="btn-ms-fail" class="btn-red" onclick="castMission('FAIL')">THẤT BẠI</button>
+                    </div>
+                </div>
+
+                <div id="phase-lady" class="hidden">
+                    <p style="text-align:center; font-weight:bold;">💧 Soi vai trò của một người:</p>
+                    <div id="lady-list"></div>
+                </div>
+
+                <div id="phase-assassin" class="hidden">
+                    <p class="red-text" style="text-align:center; font-weight:bold;">SÁT THỦ: CHỌN MERLIN ĐỂ ÁM SÁT!</p>
+                    <div id="assassin-list"></div>
+                </div>
+
+                <div id="phase-result" class="hidden">
+                    <h2 id="result-title"></h2>
+                    <p id="result-detail" style="text-align:center;"></p>
+                    <button type="button" class="btn-gold" id="btn-restart" onclick="voteRestart()">CHƠI LẠI (SẴN SÀNG: 0/0)</button>
+                    <button type="button" class="btn-outline" onclick="exitGame()">THOÁT RA SẢNH</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- FIREBASE CONFIG ---
+    const firebaseConfig = {
+        apiKey: "AIzaSyAFx9KTvVic2jxrT28Zx9wLIfBABISXnTk",
+        authDomain: "avalon-6951b.firebaseapp.com",
+        databaseURL: "https://avalon-6951b-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "avalon-6951b",
+        storageBucket: "avalon-6951b.firebasestorage.app",
+        messagingSenderId: "431540894930",
+        appId: "1:431540894930:web:44e5ace0abd50c24c2810b",
+        measurementId: "G-NYSQ42BVMG"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    let myID = 'p_' + Math.random().toString(36).substr(2, 5);
+    let myName = '', roomID = '', state = null, isHost = false;
+    let selectedPlayers = [];
+    let hasJoinedRoom = false; 
+
+    const CONFIGS = {
+        5: { q: [2,3,2,3,3], r: ['Assassin','Morgana','Merlin','Percival','Villager'], f: [1,1,1,1,1] },
+        6: { q: [2,3,4,3,4], r: ['Assassin','Morgana','Merlin','Percival','Villager','Villager'], f: [1,1,1,1,1] },
+        7: { q: [2,3,3,4,4], r: ['Assassin','Morgana','Mordred','Merlin','Percival','Villager','Villager'], f: [1,1,1,2,1] },
+        8: { q: [3,4,4,5,5], r: ['Assassin','Morgana','Mordred','Merlin','Percival','Villager','Villager','Villager'], f: [1,1,1,2,1] },
+        9: { q: [3,4,4,5,5], r: ['Assassin','Morgana','Mordred','Merlin','Percival','Villager','Villager','Villager','Villager'], f: [1,1,1,2,1] },
+        10: { q: [3,4,4,5,5], r: ['Assassin','Morgana','Mordred','Oberon','Merlin','Percival','Villager','Villager','Villager','Villager'], f: [1,1,1,2,1] }
+    };
+
+    function exitGame() { location.reload(); }
+
+    async function handleEntry(mode) {
+        let inputRoom = document.getElementById('in-room').value.trim();
+        myName = document.getElementById('in-name').value.trim();
+
+        if(!myName) return alert("Vui lòng nhập Tên của bạn!");
+
+        if(mode === 'create') {
+            if(!inputRoom) {
+                // Tự động sinh mã phòng 5 chữ số nếu bỏ trống
+                inputRoom = Math.floor(10000 + Math.random() * 90000).toString();
+                document.getElementById('in-room').value = inputRoom;
+            } else if (!/^\d+$/.test(inputRoom)) {
+                return alert("Mã phòng bắt buộc phải là SỐ!");
+            }
+            
+            roomID = inputRoom;
+            // Đợi lệnh xóa phòng hoàn tất 100% rồi mới cho vào, tránh xung đột bất đồng bộ
+            await db.ref('rooms/' + roomID).remove();
+            joinRoom();
+        } else {
+            if(!inputRoom) return alert("Vui lòng nhập Mã phòng!");
+            if (!/^\d+$/.test(inputRoom)) return alert("Mã phòng bắt buộc phải là SỐ!");
+            
+            roomID = inputRoom;
+            joinRoom();
+        }
+    }
+
+    function joinRoom() {
+        const pRef = db.ref(`rooms/${roomID}/players/${myID}`);
+        pRef.set({ id: myID, name: myName, isBot: false, joinedAt: Date.now() });
+        pRef.onDisconnect().remove();
+
+        document.getElementById('view-login').classList.add('hidden');
+        document.getElementById('view-lobby').classList.remove('hidden');
+        document.getElementById('room-title').innerText = "Phòng: " + roomID;
+
+        // Lắng nghe người chơi
+        db.ref(`rooms/${roomID}/players`).on('value', snap => {
+            const val = snap.val();
+            if (!val) return; 
+
+            const players = [];
+            snap.forEach(s => players.push(s.val()));
+            players.sort((a,b) => a.joinedAt - b.joinedAt);
+            
+            isHost = (players[0] && players[0].id === myID);
+            renderLobby(players);
+            
+            if(isHost) {
+                document.getElementById('host-controls').classList.remove('hidden');
+                document.getElementById('btn-start').disabled = players.length < 5;
+            } else {
+                document.getElementById('wait-msg').classList.remove('hidden');
+            }
+
+            // Logic chống kick an toàn (Có độ trễ để check với server, tránh lỗi cache local)
+            const amIPresent = players.find(p => p.id === myID);
+            if (amIPresent) {
+                hasJoinedRoom = true;
+            } else if (hasJoinedRoom) {
+                setTimeout(() => {
+                    db.ref(`rooms/${roomID}/players/${myID}`).once('value', checkSnap => {
+                        if (!checkSnap.exists()) {
+                            alert("Bạn đã bị chủ phòng kích!");
+                            exitGame();
+                        }
+                    });
+                }, 500); // Chờ 0.5s để xác nhận thật sự là bị kick hay chỉ là lỗi đồng bộ dữ liệu
+            }
+        });
+
+        // Lắng nghe trạng thái Game
+        db.ref(`rooms/${roomID}/state`).on('value', snap => {
+            if(snap.val()) updateUI(JSON.parse(snap.val()));
+        });
+    }
+
+    function renderLobby(players) {
+        const list = document.getElementById('lobby-list');
+        list.innerHTML = players.map((p, i) => `
+            <div class="player-item">
+                <span>${i===0?'👑 ':''}${p.name} ${p.isBot?'(MÁY)':''}</span>
+                ${isHost && i!==0 ? `<button type="button" class="kick-btn" onclick="kickPlayer('${p.id}')">KÍCH</button>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function kickPlayer(id) { db.ref(`rooms/${roomID}/players/${id}`).remove(); }
+
+    function addBot() {
+        // CẬP NHẬT: Dùng update() thay vì set() để không bao giờ ghi đè lên bộ nhớ cache tạm thời
+        const botId = 'bot_' + Math.floor(1000 + Math.random() * 9000);
+        db.ref(`rooms/${roomID}/players`).update({
+            [botId]: { id: botId, name: 'Bot ' + botId.split('_')[1], isBot: true, joinedAt: Date.now() }
+        });
+    }
+
+    function startGame() {
+        db.ref(`rooms/${roomID}/players`).once('value', snap => {
+            const ps = []; snap.forEach(s => ps.push(s.val()));
+            const n = ps.length;
+            if(n < 5 || n > 10) return alert("Cần tối thiểu 5 người, tối đa 10 người!");
+            
+            const conf = CONFIGS[n];
+            const roles = [...conf.r].sort(() => Math.random() - 0.5);
+            const order = ps.map(p => p.id).sort(() => Math.random() - 0.5);
+            const kIdx = Math.floor(Math.random() * n);
+            
+            const newState = {
+                names: ps.reduce((a,p)=>({...a,[p.id]:p.name}),{}),
+                isBot: ps.reduce((a,p)=>({...a,[p.id]:p.isBot}),{}),
+                order, roles: order.reduce((a,id,i)=>({...a,[id]:roles[i]}),{}),
+                kingIdx: kIdx, ladyIdx: (kIdx-1+n)%n, ladyUsed: [],
+                round: 1, points: [], failedVotes: 0,
+                phase: 'SELECT', team: [], votes: {}, missions: {},
+                logs: ["Trò chơi bắt đầu!"], restartVotes: {}
+            };
+            sync(newState);
+        });
+    }
+
+    function sync(s) { db.ref(`rooms/${roomID}/state`).set(JSON.stringify(s)); }
+
+    function updateUI(s) {
+        state = s;
+        document.getElementById('view-lobby').classList.add('hidden');
+        document.getElementById('view-game').classList.remove('hidden');
+        
+        const n = s.order.length;
+        const conf = CONFIGS[n];
+        document.getElementById('quest-board').innerHTML = conf.q.map((num, i) => {
+            let cls = (s.round === i+1) ? 'current' : '';
+            if(s.points[i] === 'WIN') cls = 'win';
+            if(s.points[i] === 'FAIL') cls = 'fail';
+            const req = conf.f[i] > 1 ? `<div class="quest-req">Cần ${conf.f[i]} lá đỏ</div>` : '';
+            return `<div class="quest-slot ${cls}"><b>${num}</b>${req}</div>`;
+        }).join('');
+        document.getElementById('failed-vote-count').innerText = `${s.failedVotes}/5`;
+
+        renderCircle();
+        
+        const logBox = document.getElementById('log-box');
+        logBox.innerHTML = s.logs.slice(-3).map(l => `<div>• ${l}</div>`).join('');
+        logBox.scrollTop = logBox.scrollHeight;
+
+        const myRole = s.roles[myID];
+        const isEvil = ['Assassin','Morgana','Mordred','Oberon'].includes(myRole);
+        let info = `Vai trò của bạn: <b class="${isEvil?'red-text':'blue-text'}" style="font-size:18px;">${myRole}</b><br><hr style="border-color:#30363d;">`;
+        if(myRole === 'Merlin') info += `Kẻ ác (Trừ Mordred): ` + s.order.filter(id => ['Assassin','Morgana','Oberon'].includes(s.roles[id])).map(id => s.names[id]).join(', ');
+        else if(myRole === 'Percival') info += `Merlin/Morgana: ` + s.order.filter(id => ['Merlin','Morgana'].includes(s.roles[id])).map(id => s.names[id]).sort(()=>Math.random()-0.5).join(', ');
+        else if(isEvil && myRole !== 'Oberon') info += `Đồng bọn: ` + s.order.filter(id => id!==myID && ['Assassin','Morgana','Mordred'].includes(s.roles[id])).map(id => s.names[id]).join(', ');
+        else info += `<span style="color:#8b949e">Bạn không có thông tin đặc biệt.</span>`;
+        document.getElementById('role-text').innerHTML = info;
+
+        resetPhases();
+        const kingId = s.order[s.kingIdx];
+        if(s.phase === 'SELECT') {
+            document.getElementById('phase-select').classList.remove('hidden');
+            document.getElementById('select-msg').innerText = kingId === myID ? `Bạn là Vua, hãy chọn ${conf.q[s.round-1]} người:` : `Vua ${s.names[kingId]} đang chọn đội...`;
+            document.getElementById('btn-submit-team').classList.toggle('hidden', kingId !== myID);
+            renderSelectList(conf.q[s.round-1]);
+        } else if(s.phase === 'VOTE') {
+            document.getElementById('phase-vote').classList.remove('hidden');
+            if(s.votes[myID]) document.getElementById('phase-vote').classList.add('hidden');
+        } else if(s.phase === 'MISSION') {
+            if(s.team.includes(myID)) {
+                document.getElementById('phase-mission').classList.remove('hidden');
+                document.getElementById('btn-ms-fail').classList.toggle('hidden', !isEvil);
+                if(s.missions[myID]) document.getElementById('phase-mission').classList.add('hidden');
+            }
+        } else if(s.phase === 'LADY') {
+            if(s.ladyIdx === s.order.indexOf(myID)) {
+                document.getElementById('phase-lady').classList.remove('hidden');
+                renderLadyList();
+            }
+        } else if(s.phase === 'ASSASSIN') {
+            if(s.roles[myID] === 'Assassin') {
+                document.getElementById('phase-assassin').classList.remove('hidden');
+                renderAssassinList();
+            }
+        } else if(s.phase === 'RESULT') {
+            document.getElementById('phase-result').classList.remove('hidden');
+            document.getElementById('result-title').innerHTML = s.winner === 'BLUE' ? '<span class="blue-text">PHE XANH THẮNG CHUNG CUỘC!</span>' : '<span class="red-text">PHE ĐỎ THẮNG CHUNG CUỘC!</span>';
+            document.getElementById('result-detail').innerText = s.resultDetail || '';
+            
+            if (isHost) {
+                let botAutoVoted = false;
+                s.order.forEach(id => {
+                    if(s.isBot[id] && !s.restartVotes[id]) {
+                        s.restartVotes[id] = true;
+                        botAutoVoted = true;
+                    }
+                });
+                if (botAutoVoted) sync(s); 
+            }
+
+            const readyCount = Object.keys(s.restartVotes).length;
+            document.getElementById('btn-restart').innerText = `CHƠI LẠI (SẴN SÀNG: ${readyCount}/${n})`;
+            if(s.restartVotes[myID]) document.getElementById('btn-restart').disabled = true;
+        }
+
+        if(isHost) handleBots();
+    }
+
+    function resetPhases() {
+        ['phase-select','phase-vote','phase-mission','phase-lady','phase-assassin','phase-result'].forEach(p => document.getElementById(p).classList.add('hidden'));
+    }
+
+    function renderCircle() {
+        const c = document.getElementById('player-circle'); c.innerHTML = '';
+        const n = state.order.length;
+        const myIdx = state.order.indexOf(myID);
+        state.order.forEach((id, i) => {
+            const angle = ((i - myIdx) * (360/n) + 90) * (Math.PI/180);
+            const x = 160 + 120 * Math.cos(angle), y = 160 + 120 * Math.sin(angle);
+            const div = document.createElement('div');
+            div.className = `player-node ${id===myID?'me':''} ${i===state.kingIdx?'king':''} ${i===state.ladyIdx?'lady':''} ${state.team.includes(id)?'selected':''}`;
+            div.style.left = x-35+'px'; div.style.top = y-35+'px';
+            div.innerHTML = `<span style="pointer-events:none;">${state.names[id]}</span>`;
+            if(state.votes[id] && state.phase === 'MISSION') {
+                const isYes = state.votes[id] === 'YES';
+                div.innerHTML += `<div class="vote-pop" style="background:${isYes?'#238636':'#ff416c'}">${isYes?'✔':'✖'}</div>`;
+            }
+            c.appendChild(div);
+        });
+    }
+
+    function toggleRole() { document.getElementById('role-text').classList.toggle('hidden'); }
+
+    function renderSelectList(limit) {
+        const list = document.getElementById('select-list');
+        list.innerHTML = state.order.map(id => `
+            <div class="player-item" onclick="toggleSelect('${id}', ${limit})" style="cursor:pointer;">
+                <span>${state.names[id]}</span>
+                <input type="checkbox" ${selectedPlayers.includes(id)?'checked':''} disabled style="transform: scale(1.3);">
+            </div>
+        `).join('');
+    }
+
+    function toggleSelect(id, limit) {
+        if(state.order[state.kingIdx] !== myID) return;
+        if(selectedPlayers.includes(id)) selectedPlayers = selectedPlayers.filter(x => x!==id);
+        else if(selectedPlayers.length < limit) selectedPlayers.push(id);
+        renderSelectList(limit);
+    }
+
+    function submitTeam() {
+        const limit = CONFIGS[state.order.length].q[state.round-1];
+        if(selectedPlayers.length !== limit) return alert("Chọn đủ số lượng người nhé!");
+        state.team = selectedPlayers; state.phase = 'VOTE'; state.votes = {};
+        state.logs.push(`Vua chọn: ${state.team.map(id => state.names[id]).join(', ')}`);
+        sync(state); selectedPlayers = [];
+    }
+
+    function castVote(v) { state.votes[myID] = v; checkVoteDone(); }
+    function checkVoteDone() {
+        const n = state.order.length;
+        if(Object.keys(state.votes).length === n) {
+            const yes = Object.values(state.votes).filter(v => v === 'YES').length;
+            if(yes > n/2) {
+                state.phase = 'MISSION'; state.missions = {};
+                state.logs.push("Đội hình được bầu CHẤP THUẬN.");
+            } else {
+                state.failedVotes++;
+                if(state.failedVotes >= 5) endGame('RED', "Phe xanh quá hèn nhát, không thể bầu ra đội hình!");
+                else {
+                    state.kingIdx = (state.kingIdx+1)%n; state.phase = 'SELECT'; state.team = [];
+                    state.logs.push("Đội hình BỊ BÁC BỎ!");
+                }
+            }
+        }
+        sync(state);
+    }
+
+    function castMission(v) { state.missions[myID] = v; checkMissionDone(); }
+    function checkMissionDone() {
+        if(Object.keys(state.missions).length === state.team.length) {
+            const fails = Object.values(state.missions).filter(v => v === 'FAIL').length;
+            const req = CONFIGS[state.order.length].f[state.round-1];
+            const isWin = fails < req;
+            state.points[state.round-1] = isWin ? 'WIN' : 'FAIL';
+            state.logs.push(`Nhiệm vụ ${state.round}: ${isWin?'THÀNH CÔNG':'THẤT BẠI'} (${fails} lá đỏ)`);
+            
+            const blueP = state.points.filter(p => p==='WIN').length;
+            const redP = state.points.filter(p => p==='FAIL').length;
+            
+            if(redP >= 3) endGame('RED', "Phe đỏ đã phá hoại thành công 3 nhiệm vụ.");
+            else if(blueP >= 3) {
+                state.phase = 'ASSASSIN';
+                state.logs.push("Phe xanh thắng 3 vòng! Sát thủ đang tìm Merlin...");
+            } else {
+                if(state.round >= 2 && state.round <= 4 && !state.ladyUsed.includes(state.order[state.ladyIdx])) {
+                    state.phase = 'LADY';
+                } else {
+                    nextRound();
+                }
+            }
+        }
+        sync(state);
+    }
+
+    function nextRound() {
+        state.round++; state.kingIdx = (state.kingIdx+1)%state.order.length;
+        state.phase = 'SELECT'; state.team = []; state.failedVotes = 0; state.votes = {};
+    }
+
+    function renderLadyList() {
+        const list = document.getElementById('lady-list');
+        const canSoi = state.order.filter((id, i) => i !== state.ladyIdx && !state.ladyUsed.includes(id));
+        list.innerHTML = canSoi.map(id => `<button type="button" class="btn-outline" onclick="soiLady('${id}')">Soi: ${state.names[id]}</button>`).join('');
+    }
+
+    function soiLady(targetId) {
+        const role = state.roles[targetId];
+        const isEvil = ['Assassin','Morgana','Mordred','Oberon'].includes(role);
+        alert(`${state.names[targetId]} thuộc phe: ${isEvil?'ĐỎ (ÁC)':'XANH (THIỆN)'}`);
+        state.ladyUsed.push(state.order[state.ladyIdx]);
+        state.ladyIdx = state.order.indexOf(targetId);
+        state.logs.push(`Lady Lake đã soi bí mật một người.`);
+        nextRound(); sync(state);
+    }
+
+    function renderAssassinList() {
+        const list = document.getElementById('assassin-list');
+        const targets = state.order.filter(id => !['Assassin','Morgana','Mordred'].includes(state.roles[id]));
+        list.innerHTML = targets.map(id => `<button type="button" class="btn-red" onclick="kill('${id}')">Ám sát: ${state.names[id]}</button>`).join('');
+    }
+
+    function kill(id) {
+        if(state.roles[id] === 'Merlin') endGame('RED', `Sát thủ đã ám sát chuẩn xác MERLIN (${state.names[id]})! Phe Đỏ lật kèo.`);
+        else endGame('BLUE', `Sát thủ đã ám sát sai người! ${state.names[id]} không phải Merlin.`);
+        sync(state);
+    }
+
+    function endGame(winner, detail) {
+        state.phase = 'RESULT'; state.winner = winner; state.resultDetail = detail;
+        state.restartVotes = {};
+    }
+
+    function voteRestart() {
+        state.restartVotes[myID] = true;
+        const n = state.order.length;
+        if(Object.keys(state.restartVotes).length === n) {
+            startGame();
+        } else {
+            sync(state);
+        }
+    }
+
+    // --- TRÍ TUỆ BOT ---
+    function handleBots() {
+        if(!isHost || state.phase === 'RESULT') return;
+        
+        let actorId = null;
+        if(state.phase === 'SELECT') actorId = state.order[state.kingIdx];
+        else if(state.phase === 'VOTE') actorId = state.order.find(id => !state.votes[id]);
+        else if(state.phase === 'MISSION') actorId = state.team.find(id => !state.missions[id]);
+        else if(state.phase === 'LADY') actorId = state.order[state.ladyIdx];
+        else if(state.phase === 'ASSASSIN') actorId = state.order.find(id => state.roles[id] === 'Assassin');
+
+        if(actorId && state.isBot[actorId]) {
+            setTimeout(() => botAction(actorId), 1500); 
+        }
+    }
+
+    function botAction(bid) {
+        const role = state.roles[bid];
+        const isEvil = ['Assassin','Morgana','Mordred','Oberon'].includes(role);
+
+        if(state.phase === 'SELECT') {
+            const limit = CONFIGS[state.order.length].q[state.round-1];
+            let team = [bid];
+            const others = state.order.filter(id => id !== bid).sort(() => Math.random() - 0.5);
+            state.team = team.concat(others.slice(0, limit-1));
+            state.phase = 'VOTE'; state.votes = {};
+            state.logs.push(`Vua ${state.names[bid]} đã chọn đội.`);
+            sync(state);
+        } 
+        else if(state.phase === 'VOTE') {
+            state.votes[bid] = (Math.random() > 0.3) ? 'YES' : 'NO';
+            checkVoteDone();
+        } 
+        else if(state.phase === 'MISSION') {
+            state.missions[bid] = (isEvil && Math.random() > 0.4) ? 'FAIL' : 'WIN';
+            checkMissionDone();
+        }
+        else if(state.phase === 'LADY') {
+            const canSoi = state.order.filter((id, i) => i !== state.ladyIdx && !state.ladyUsed.includes(id));
+            if(canSoi.length > 0) {
+                const target = canSoi[0];
+                state.ladyUsed.push(state.order[state.ladyIdx]);
+                state.ladyIdx = state.order.indexOf(target);
+                state.logs.push(`Bot Lady Lake đã soi một người.`);
+                nextRound(); sync(state);
+            }
+        }
+        else if(state.phase === 'ASSASSIN') {
+            const targets = state.order.filter(id => !['Assassin','Morgana','Mordred'].includes(state.roles[id]));
+            if (targets.length > 0) {
+                const target = targets[Math.floor(Math.random()*targets.length)];
+                kill(target);
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
