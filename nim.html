@@ -18,32 +18,14 @@
             display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box;
         }
         
-        /* Đồng bộ nút back-home giống Avalon */
         .back-home {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1000;
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            padding: 10px 18px;
-            border-radius: 12px;
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            position: fixed; top: 20px; left: 20px; z-index: 1000;
+            background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 12px;
+            color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600;
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
         }
-        .back-home:hover {
-            color: white;
-            border-color: var(--gold);
-            transform: translateX(5px);
-        }
+        .back-home:hover { color: white; border-color: var(--gold); transform: translateX(5px); }
 
         .glass {
             background: var(--glass-bg); backdrop-filter: blur(16px);
@@ -79,13 +61,22 @@
         .player-name { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
         .score-num { font-size: 24px; color: white; }
         
-        #randomizing-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;}
+        .fullscreen-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(15, 23, 42, 0.95); z-index: 1000; display: none; 
+            flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+        }
     </style>
 </head>
 <body>
     <a href="index.html" class="back-home">⬅ TRANG CHỦ</a>
 
-    <div id="randomizing-overlay">
+    <div id="ready-overlay" class="fullscreen-overlay">
+        <h2 style="color: var(--gold); font-size: 2rem;">ĐANG CHỜ ĐỐI THỦ...</h2>
+        <p id="ready-status" style="color: var(--green); font-size: 1.5rem; font-weight: bold;">Sẵn sàng: 1/2</p>
+    </div>
+
+    <div id="randomizing-overlay" class="fullscreen-overlay">
         <h2 id="random-msg" style="color: var(--gold); font-size: 2rem;">Đang tung đồng xu...</h2>
         <p id="random-sub" style="color: #94a3b8;">Ai sẽ đi trước đây?</p>
     </div>
@@ -125,14 +116,18 @@
         <div id="turn-txt" class="indicator">ĐANG CHỜ...</div>
         <div id="board"></div>
         <button id="btn-move" onclick="makeMove()" disabled style="background: var(--green); margin-top: 25px;">CHỐT LƯỢT ĐI</button>
-        <button id="btn-restart" onclick="requestRestart()" style="display:none; background: var(--gold); color:black;">VÁN MỚI</button>
+        <button id="btn-restart" onclick="requestRestart()" style="display:none; background: var(--gold); color:black;">VÁN MỚI (SẴN SÀNG)</button>
     </div>
 
     <script>
         const peer = new Peer();
         let conn, myId;
+        let isHost = false; // Phân biệt người tạo phòng và người tham gia
         let isMyTurn = false;
         let isBotMode = false;
+        
+        let localReady = false;
+        let remoteReady = false;
         
         let myName = "";
         let oppName = "Đối Thủ";
@@ -146,6 +141,7 @@
             document.getElementById('status').innerText = "Sẵn sàng nhận thách đấu!"; 
         });
         
+        // Khi CÓ NGƯỜI KẾT NỐI VÀO (Mình là Host)
         peer.on('connection', c => { 
             const inputName = document.getElementById('my-name-input').value.trim();
             if (!inputName) {
@@ -153,11 +149,13 @@
                 return;
             }
             
+            isHost = true; 
             conn = c; 
             isBotMode = false;
             saveMyName();
             setupConn(); 
             
+            // Host tung đồng xu lần đầu
             const randomStarter = Math.random() < 0.5;
             setTimeout(() => {
                 conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName});
@@ -165,7 +163,7 @@
             }, 500);
         });
 
-        // HÀM KIỂM TRA TÊN VÀ KẾT NỐI (Chơi Online)
+        // KHI MÌNH KẾT NỐI VÀO NGƯỜI KHÁC (Mình là Guest)
         function connectToPeer() {
             const inputName = document.getElementById('my-name-input').value.trim();
             const id = document.getElementById('peer-id-input').value.trim();
@@ -173,6 +171,7 @@
             if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi bắt đầu!");
             if (!id) return alert("Vui lòng nhập ID phòng của đối thủ!");
             
+            isHost = false;
             saveMyName();
             conn = peer.connect(id);
             isBotMode = false;
@@ -185,10 +184,12 @@
         }
 
         function setupConn() {
+            // Gửi tên của mình cho đối thủ
             conn.on('open', () => {
                 conn.send({type: 'USER_INFO', name: myName});
             });
 
+            // Lắng nghe dữ liệu
             conn.on('data', data => {
                 if(data.type === 'USER_INFO') {
                     oppName = data.name;
@@ -197,16 +198,25 @@
                 if(data.type === 'START_INFO') { 
                     oppName = data.hostName; 
                     document.getElementById('name-opp').innerText = oppName;
+                    
+                    // Xóa trạng thái Ready nếu là vòng chơi lại
+                    localReady = false; remoteReady = false;
+                    document.getElementById('ready-overlay').style.display = 'none';
+                    resetGameUI();
+
                     startRandomSequence(data.youStart, oppName); 
                 }
                 if(data.type === 'MOVE') { 
                     rows = data.rows; isMyTurn = true; render(); checkWin("OPP"); 
                 }
-                if(data.type === 'RESTART') { resetGame(); }
+                if(data.type === 'READY_UP') {
+                    remoteReady = true;
+                    checkBothReady();
+                }
             });
         }
 
-        // HÀM KIỂM TRA TÊN VÀ CHƠI VỚI MÁY
+        // --- LOGIC BOT GIỮ NGUYÊN ---
         function startBotMode() {
             const inputName = document.getElementById('my-name-input').value.trim();
             if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi chơi với máy!");
@@ -252,12 +262,12 @@
                     }
                 }
             }
-
             let available = counts.map((v, i) => ({v, i})).filter(x => x.v > 0);
             let randRow = available[Math.floor(Math.random() * available.length)];
             return { row: randRow.i, take: 1 };
         }
 
+        // --- GIAO DIỆN & LUỒNG TRÒ CHƠI ---
         function startRandomSequence(iStart, opponentName) {
             const overlay = document.getElementById('randomizing-overlay');
             overlay.style.display = 'flex';
@@ -351,19 +361,67 @@
             return false;
         }
 
+        // --- CƠ CHẾ SẴN SÀNG (READY) ---
         function requestRestart() { 
             if (isBotMode) {
-                resetGame();
-                const randomStarter = Math.random() < 0.5;
-                isMyTurn = randomStarter;
-                startRandomSequence(randomStarter, oppName);
+                // Chơi với Bot thì vào luôn 2/2
+                const overlay = document.getElementById('ready-overlay');
+                const statusText = document.getElementById('ready-status');
+                overlay.style.display = 'flex';
+                statusText.innerText = "Sẵn sàng: 2/2\nBắt đầu!";
+                statusText.style.color = "var(--green)";
+                
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    resetGameUI();
+                    const randomStarter = Math.random() < 0.5;
+                    startRandomSequence(randomStarter, oppName);
+                }, 1000);
             } else {
-                conn.send({type: 'RESTART'}); 
-                resetGame();
+                // Chơi online
+                localReady = true;
+                document.getElementById('btn-restart').style.display = 'none'; // Ẩn nút sau khi bấm
+                conn.send({type: 'READY_UP'}); 
+                checkBothReady();
             }
         }
 
-        function resetGame() { resetGameUI(); }
+        function checkBothReady() {
+            const overlay = document.getElementById('ready-overlay');
+            const statusText = document.getElementById('ready-status');
+
+            if (localReady && !remoteReady) {
+                // Mình sẵn sàng nhưng đối thủ chưa
+                overlay.style.display = 'flex';
+                statusText.innerText = `Sẵn sàng: 1/2\n(Đang chờ ${oppName}...)`;
+                statusText.style.color = "var(--gold)";
+            } 
+            else if (!localReady && remoteReady) {
+                // Đối thủ sẵn sàng nhưng mình chưa (Báo hiệu lên UI)
+                document.getElementById('turn-txt').innerText = `${oppName.toUpperCase()} MUỐN CHƠI LẠI (1/2)`;
+                document.getElementById('turn-txt').style.color = "var(--gold)";
+            } 
+            else if (localReady && remoteReady) {
+                // Cả 2 cùng sẵn sàng
+                overlay.style.display = 'flex';
+                statusText.innerText = "Sẵn sàng: 2/2\nBắt đầu!";
+                statusText.style.color = "var(--green)";
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    localReady = false;
+                    remoteReady = false;
+                    resetGameUI();
+
+                    // Chỉ Host mới là người gửi lệnh Tung đồng xu để đảm bảo đồng bộ
+                    if (isHost) {
+                        const randomStarter = Math.random() < 0.5;
+                        conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName});
+                        startRandomSequence(randomStarter, oppName);
+                    }
+                }, 1000);
+            }
+        }
 
         function resetGameUI() {
             rows = [3, 4, 7]; selRow = null; selCount = 0;
