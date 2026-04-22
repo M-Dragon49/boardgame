@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đếm Số Mục Tiêu - Boardgame Hub</title>
+    <title>Đếm Số Chiến Lược - Boardgame Hub</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
         
@@ -51,6 +51,14 @@
             margin-bottom: 10px; 
             text-transform: uppercase;
             text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); 
+        }
+
+        .badge-test {
+            font-size: 1rem;
+            color: #ef4444;
+            vertical-align: middle;
+            text-transform: none;
+            font-weight: 600;
         }
 
         .rule {
@@ -198,7 +206,7 @@
 <body>
 
     <div class="game-wrapper">
-        <h1>ĐẾM SỐ CHIẾN LƯỢC</h1>
+        <h1>ĐẾM SỐ CHIẾN LƯỢC <span class="badge-test">(Thử nghiệm)</span></h1>
         
         <div id="setup-area">
             <div class="rule">
@@ -206,12 +214,12 @@
             </div>
 
             <div class="input-group">
-                <label>Tên Người chơi 1 (Chủ phòng):</label>
+                <label>Tên Người chơi 1:</label>
                 <input type="text" id="p1Name" placeholder="Nhập tên của bạn..." autocomplete="off">
             </div>
 
             <div class="input-group">
-                <label>Tên Người chơi 2 (Đối thủ):</label>
+                <label>Tên Người chơi 2:</label>
                 <input type="text" id="p2Name" placeholder="Nhập tên đối thủ..." autocomplete="off">
             </div>
 
@@ -220,16 +228,12 @@
                 <input type="number" id="targetInput" value="30" min="5">
             </div>
 
-            <button onclick="createRoom()">Tạo Phòng & Chơi Ngay</button>
+            <button onclick="startGame()">Bắt Đầu Chơi</button>
             <br>
             <a href="index.html" class="btn-back">⬅ Quay lại Sảnh</a>
         </div>
 
         <div id="gameplay-area">
-            <div style="text-align: right; font-size: 0.85rem; color: #94a3b8;">
-                Mã phòng: <b id="roomCodeDisplay" style="color: white;">#----</b>
-            </div>
-
             <div class="status-box">
                 <div style="color: #cbd5e1;">Mục tiêu cần đạt: <b id="targetDisplay" style="color: white; font-size: 1.2rem;">30</b></div>
                 <div class="number-display" id="currentNumberDisplay">0</div>
@@ -251,7 +255,7 @@
             <p style="color: #94a3b8; margin-bottom: 30px;">Trận đấu kết thúc ở mốc số <b id="finalTargetText">30</b>.</p>
             <button onclick="resetGame()">Chơi Ván Mới</button>
             <br>
-            <a href="index.html" class="btn-back">⬅ Rời Phòng & Về Sảnh</a>
+            <a href="index.html" class="btn-back">⬅ Về Sảnh</a>
         </div>
     </div>
 
@@ -263,8 +267,8 @@
         let p1Name = "";
         let p2Name = "";
 
-        // Hàm tạo phòng và bắt đầu game
-        function createRoom() {
+        // Hàm bắt đầu game
+        function startGame() {
             p1Name = document.getElementById("p1Name").value.trim();
             p2Name = document.getElementById("p2Name").value.trim();
             let inputVal = parseInt(document.getElementById("targetInput").value);
@@ -287,9 +291,6 @@
             // Cập nhật giao diện
             document.getElementById("targetDisplay").innerText = targetNumber;
             document.getElementById("finalTargetText").innerText = targetNumber;
-            
-            // Giả lập tạo mã phòng ngẫu nhiên (4 số)
-            document.getElementById("roomCodeDisplay").innerText = "#" + Math.floor(1000 + Math.random() * 9000);
 
             updateUI();
 
