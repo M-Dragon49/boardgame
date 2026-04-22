@@ -26,14 +26,18 @@
         h1 { text-align: center; color: var(--gold); text-shadow: 0 2px 10px rgba(0,0,0,0.5); margin-bottom: 25px; text-transform: uppercase; }
         input {
             width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.4); color: white; box-sizing: border-box; font-family: inherit;
+            background: rgba(0,0,0,0.4); color: white; box-sizing: border-box; font-family: inherit; font-size: 15px;
         }
+        input:focus { outline: none; border-color: var(--gold); }
         button {
-            width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold;
+            width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; font-size: 14px;
             cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s;
         }
         button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-bot { background: #8b5cf6; } /* Màu tím cho nút chơi với máy */
+        
         .row { display: flex; justify-content: center; gap: 12px; margin: 18px 0; }
         .circle {
             width: 48px; height: 48px; background: #1e293b; border: 2px solid #475569;
@@ -44,34 +48,52 @@
             text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 20px; font-weight: 800;
             background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
         }
-        .score-box { display: flex; justify-content: space-around; margin-bottom: 20px; font-weight: bold; color: var(--gold); }
-        #randomizing-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .score-box { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: var(--gold); background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;}
+        .player-name { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+        .score-num { font-size: 24px; color: white; }
+        
+        #randomizing-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;}
     </style>
 </head>
 <body>
     <a href="index.html" class="back-home">⬅ TRANG CHỦ</a>
 
     <div id="randomizing-overlay">
-        <h2 id="random-msg" style="color: var(--gold);">Đang tung đồng xu...</h2>
+        <h2 id="random-msg" style="color: var(--gold); font-size: 2rem;">Đang tung đồng xu...</h2>
         <p id="random-sub" style="color: #94a3b8;">Ai sẽ đi trước đây?</p>
     </div>
 
     <div id="lobby" class="glass">
         <h1>AI THẮNG LÀM VUA</h1>
         <p style="text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Trò chơi chiến thuật lấy viên cuối là THUA</p>
+        
+        <input type="text" id="my-name-input" placeholder="Nhập tên của bạn (Vd: Faker, Chovy...)" maxlength="15">
+
         <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 20px;">
-            <small style="color: #94a3b8;">ID Của Bạn:</small>
+            <small style="color: #94a3b8;">ID Phòng Của Bạn:</small>
             <div id="my-id" style="font-size: 22px; font-weight: 800; color: var(--red); letter-spacing: 2px;">...</div>
         </div>
-        <input type="text" id="peer-id-input" placeholder="Nhập ID đối thủ">
-        <button onclick="connectToPeer()">BẮT ĐẦU THÁCH ĐẤU</button>
-        <p id="status" style="text-align:center; font-size: 12px; color: var(--green);">Đang kết nối server...</p>
+        
+        <input type="text" id="peer-id-input" placeholder="Nhập ID phòng đối thủ để tham gia">
+        <button onclick="connectToPeer()">BẮT ĐẦU THÁCH ĐẤU ONLINE</button>
+        
+        <div style="margin: 20px 0; border-top: 1px solid var(--glass-border); padding-top: 20px;"></div>
+        
+        <button class="btn-bot" onclick="startBotMode()">🤖 CHƠI VỚI MÁY (BOT THÔNG MINH)</button>
+
+        <p id="status" style="text-align:center; font-size: 12px; color: var(--green); margin-top: 15px;">Đang kết nối server...</p>
     </div>
 
     <div id="game-view" class="glass" style="display:none;">
         <div class="score-box">
-            <span>BẠN: <span id="s-you">0</span></span>
-            <span>ĐỐI THỦ: <span id="s-opp">0</span></span>
+            <div style="text-align: left;">
+                <span class="player-name" id="name-you">BẠN</span>
+                <span class="score-num" id="s-you">0</span>
+            </div>
+            <div style="text-align: right;">
+                <span class="player-name" id="name-opp">ĐỐI THỦ</span>
+                <span class="score-num" id="s-opp">0</span>
+            </div>
         </div>
         <div id="turn-txt" class="indicator">ĐANG CHỜ...</div>
         <div id="board"></div>
@@ -81,49 +103,149 @@
 
     <script>
         const peer = new Peer();
-        let conn, myId, isMyTurn = false;
+        let conn, myId;
+        let isMyTurn = false;
+        let isBotMode = false;
+        
+        let myName = "Người Chơi";
+        let oppName = "Đối Thủ";
+
         let rows = [3, 4, 7], selRow = null, selCount = 0;
         let scores = {you: 0, opp: 0};
 
-        peer.on('open', id => { myId = id; document.getElementById('my-id').innerText = id; document.getElementById('status').innerText = "Sẵn sàng nhận thách đấu!"; });
+        // --- KẾT NỐI MẠNG LOBBY ---
+        peer.on('open', id => { 
+            myId = id; 
+            document.getElementById('my-id').innerText = id; 
+            document.getElementById('status').innerText = "Sẵn sàng nhận thách đấu!"; 
+        });
         
         peer.on('connection', c => { 
             conn = c; 
+            isBotMode = false;
+            saveMyName();
             setupConn(); 
-            // Host sẽ là người tung đồng xu
+            
+            // Host sẽ là người tung đồng xu và gửi tên qua cho Guest
             const randomStarter = Math.random() < 0.5;
             setTimeout(() => {
-                conn.send({type: 'START_INFO', youStart: !randomStarter});
-                startRandomSequence(randomStarter);
+                conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName});
+                startRandomSequence(randomStarter, oppName); // Tạm gọi đối thủ, sẽ update khi nhận data
             }, 500);
         });
 
         function connectToPeer() {
-            const id = document.getElementById('peer-id-input').value;
-            if(!id) return;
+            const id = document.getElementById('peer-id-input').value.trim();
+            if(!id) return alert("Vui lòng nhập ID đối thủ!");
+            saveMyName();
+            
             conn = peer.connect(id);
+            isBotMode = false;
             setupConn();
             document.getElementById('status').innerText = "Đang kết nối với đối thủ...";
         }
 
+        function saveMyName() {
+            const inputName = document.getElementById('my-name-input').value.trim();
+            if (inputName) myName = inputName;
+        }
+
         function setupConn() {
+            // Khi Guest vừa kết nối, gửi tên của Guest cho Host
+            conn.on('open', () => {
+                conn.send({type: 'USER_INFO', name: myName});
+            });
+
             conn.on('data', data => {
-                if(data.type === 'START_INFO') { startRandomSequence(data.youStart); }
-                if(data.type === 'MOVE') { rows = data.rows; isMyTurn = true; render(); checkWin("OPP"); }
+                if(data.type === 'USER_INFO') {
+                    oppName = data.name;
+                    document.getElementById('name-opp').innerText = oppName;
+                }
+                if(data.type === 'START_INFO') { 
+                    oppName = data.hostName; // Nhận tên từ Host
+                    document.getElementById('name-opp').innerText = oppName;
+                    startRandomSequence(data.youStart, oppName); 
+                }
+                if(data.type === 'MOVE') { 
+                    rows = data.rows; isMyTurn = true; render(); checkWin("OPP"); 
+                }
                 if(data.type === 'RESTART') { resetGame(); }
             });
         }
 
-        function startRandomSequence(iStart) {
+        // --- CHẾ ĐỘ CHƠI VỚI MÁY (BOT MISÈRE NIM) ---
+        function startBotMode() {
+            saveMyName();
+            isBotMode = true;
+            oppName = "Bot Master 🤖";
+            document.getElementById('name-opp').innerText = oppName;
+            
+            const randomStarter = Math.random() < 0.5;
+            startRandomSequence(randomStarter, oppName);
+        }
+
+        function executeBotTurn() {
+            updateTurnText(false, true); // Đổi text thành Bot đang nghĩ
+            
+            setTimeout(() => {
+                let move = getBestBotMove(rows);
+                rows[move.row] -= move.take;
+                isMyTurn = true;
+                render();
+                checkWin("OPP");
+            }, 1000 + Math.random() * 1000); // Delay 1-2s cho giống người thật
+        }
+
+        function getBestBotMove(board) {
+            let counts = board.slice();
+            let nonOnes = counts.filter(x => x > 1).length;
+
+            // TRƯỜNG HỢP ĐẶC BIỆT: Giai đoạn cuối game (Luật lấy cuối là thua)
+            // Nếu chỉ còn ĐÚNG 1 hàng có số lượng > 1, và các hàng khác đều là 1
+            if (nonOnes === 1) {
+                let ones = counts.filter(x => x === 1).length;
+                let targetIndex = counts.findIndex(x => x > 1);
+                
+                // Thuật toán: Làm sao để tổng số lượng các hàng có 1 viên là SỐ LẺ
+                let leaveAmount = (ones % 2 === 0) ? 1 : 0;
+                let takeAmount = counts[targetIndex] - leaveAmount;
+                return { row: targetIndex, take: takeAmount };
+            }
+
+            // TRƯỜNG HỢP BÌNH THƯỜNG: Tính toán Nim-sum (XOR)
+            let nimSum = counts.reduce((a, b) => a ^ b, 0);
+            
+            if (nimSum !== 0) {
+                for (let i = 0; i < counts.length; i++) {
+                    let target = counts[i] ^ nimSum;
+                    if (target < counts[i]) {
+                        return { row: i, take: counts[i] - target };
+                    }
+                }
+            }
+
+            // Nếu Nim-sum = 0 (Tình thế Bot đang bất lợi), bốc bừa 1 viên ở hàng ngẫu nhiên để câu giờ
+            let available = counts.map((v, i) => ({v, i})).filter(x => x.v > 0);
+            let randRow = available[Math.floor(Math.random() * available.length)];
+            return { row: randRow.i, take: 1 };
+        }
+
+        // --- GIAO DIỆN & LOGIC CHUNG ---
+        function startRandomSequence(iStart, opponentName) {
             const overlay = document.getElementById('randomizing-overlay');
             overlay.style.display = 'flex';
+            document.getElementById('name-you').innerText = myName;
+            
             setTimeout(() => {
-                document.getElementById('random-msg').innerText = iStart ? "BẠN ĐI TRƯỚC!" : "ĐỐI THỦ ĐI TRƯỚC!";
+                document.getElementById('random-msg').innerText = iStart ? `${myName.toUpperCase()} ĐI TRƯỚC!` : `${opponentName.toUpperCase()} ĐI TRƯỚC!`;
                 document.getElementById('random-msg').style.color = iStart ? "var(--green)" : "var(--red)";
+                
                 setTimeout(() => {
                     overlay.style.display = 'none';
                     isMyTurn = iStart;
                     startUI();
+                    
+                    if (isBotMode && !isMyTurn) executeBotTurn();
                 }, 1500);
             }, 1500);
         }
@@ -131,7 +253,7 @@
         function startUI() {
             document.getElementById('lobby').style.display = 'none';
             document.getElementById('game-view').style.display = 'block';
-            resetGame();
+            resetGameUI();
         }
 
         function render() {
@@ -145,7 +267,7 @@
                 }
                 b.appendChild(rDiv);
             });
-            updateTurn();
+            updateTurnText(isMyTurn, false);
         }
 
         function select(r, el) {
@@ -165,34 +287,73 @@
             rows[selRow] -= selCount;
             isMyTurn = false; selRow = null; selCount = 0;
             document.getElementById('btn-move').disabled = true;
-            conn.send({type: 'MOVE', rows: rows});
+            
+            if (!isBotMode) {
+                conn.send({type: 'MOVE', rows: rows});
+            }
+            
             render();
-            checkWin("YOU");
+            
+            if (!checkWin("YOU") && isBotMode) {
+                executeBotTurn();
+            }
         }
 
-        function updateTurn() {
+        function updateTurnText(isMe, isBotThinking = false) {
             const t = document.getElementById('turn-txt');
-            t.innerText = isMyTurn ? "🟢 LƯỢT CỦA BẠN" : "⏳ ĐỐI THỦ ĐANG NGHĨ...";
-            t.style.color = isMyTurn ? "var(--green)" : "#94a3b8";
+            if (isMe) {
+                t.innerText = "🟢 LƯỢT CỦA BẠN";
+                t.style.color = "var(--green)";
+            } else {
+                t.innerText = isBotThinking ? "🤖 BOT ĐANG TÍNH TOÁN..." : "⏳ ĐỐI THỦ ĐANG NGHĨ...";
+                t.style.color = "#94a3b8";
+            }
         }
 
         function checkWin(last) {
             if(rows.reduce((a,b)=>a+b,0) === 0) {
-                const win = (last === "YOU" ? "ĐỐI THỦ" : "BẠN");
-                if(win === "BẠN") scores.you++; else scores.opp++;
+                const winName = (last === "YOU" ? oppName : myName);
+                const isYouWin = (winName === myName);
+                
+                if(isYouWin) scores.you++; else scores.opp++;
                 document.getElementById('s-you').innerText = scores.you;
                 document.getElementById('s-opp').innerText = scores.opp;
-                document.getElementById('turn-txt').innerText = win + " ĐÃ THẮNG CHIẾN THUẬT!";
+                
+                document.getElementById('turn-txt').innerText = `${winName.toUpperCase()} ĐÃ CHIẾN THẮNG!`;
+                document.getElementById('turn-txt').style.color = isYouWin ? "var(--green)" : "var(--red)";
+                
                 document.getElementById('btn-restart').style.display = 'block';
                 document.getElementById('btn-move').style.display = 'none';
+                return true;
+            }
+            return false;
+        }
+
+        function requestRestart() { 
+            if (isBotMode) {
+                // Tự reset nếu chơi với máy
+                resetGame();
+                const randomStarter = Math.random() < 0.5;
+                isMyTurn = randomStarter;
+                startRandomSequence(randomStarter, oppName);
+            } else {
+                // Gửi tín hiệu nếu chơi online
+                conn.send({type: 'RESTART'}); 
+                resetGame();
             }
         }
 
-        function requestRestart() { conn.send({type: 'RESTART'}); resetGame(); }
         function resetGame() {
+            resetGameUI();
+            // Người thua ván trước sẽ được quyền đi trước (Luật bất thành văn của boardgame)
+            // Hoặc có thể random lại. Ở đây giữ nguyên logic chờ đối thủ đánh nếu họ đi trước.
+        }
+
+        function resetGameUI() {
             rows = [3, 4, 7]; selRow = null; selCount = 0;
             document.getElementById('btn-restart').style.display = 'none';
             document.getElementById('btn-move').style.display = 'block';
+            document.getElementById('btn-move').disabled = true;
             render();
         }
     </script>
