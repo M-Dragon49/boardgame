@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai Thắng Làm Vua - Game Nim Online</title>
+    <title>Ai Cuối Cùng Người Đó Chết</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
@@ -17,13 +17,40 @@
             color: #f8fafc; margin: 0; min-height: 100vh;
             display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box;
         }
-        .back-home { position: fixed; top: 20px; left: 20px; color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600; z-index: 100; }
+        
+        /* Đồng bộ nút back-home giống Avalon */
+        .back-home {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            padding: 10px 18px;
+            border-radius: 12px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .back-home:hover {
+            color: white;
+            border-color: var(--gold);
+            transform: translateX(5px);
+        }
+
         .glass {
             background: var(--glass-bg); backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border); border-radius: 20px;
             padding: 25px; width: 100%; max-width: 500px; margin-top: 50px; box-sizing: border-box;
         }
-        h1 { text-align: center; color: var(--gold); text-shadow: 0 2px 10px rgba(0,0,0,0.5); margin-bottom: 25px; text-transform: uppercase; }
+        h1 { text-align: center; color: var(--gold); text-shadow: 0 2px 10px rgba(0,0,0,0.5); margin-bottom: 25px; text-transform: uppercase; font-size: 1.8rem; }
         input {
             width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--glass-border);
             background: rgba(0,0,0,0.4); color: white; box-sizing: border-box; font-family: inherit; font-size: 15px;
@@ -36,7 +63,7 @@
         button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
         
-        .btn-bot { background: #8b5cf6; } /* Màu tím cho nút chơi với máy */
+        .btn-bot { background: #8b5cf6; } 
         
         .row { display: flex; justify-content: center; gap: 12px; margin: 18px 0; }
         .circle {
@@ -64,10 +91,10 @@
     </div>
 
     <div id="lobby" class="glass">
-        <h1>AI THẮNG LÀM VUA</h1>
+        <h1>AI CUỐI CÙNG<br>NGƯỜI ĐÓ CHẾT</h1>
         <p style="text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Trò chơi chiến thuật lấy viên cuối là THUA</p>
         
-        <input type="text" id="my-name-input" placeholder="Nhập tên của bạn (Vd: Faker, Chovy...)" maxlength="15">
+        <input type="text" id="my-name-input" placeholder="Bắt buộc nhập tên (Vd: Faker, Chovy...)" maxlength="15">
 
         <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 20px;">
             <small style="color: #94a3b8;">ID Phòng Của Bạn:</small>
@@ -107,13 +134,12 @@
         let isMyTurn = false;
         let isBotMode = false;
         
-        let myName = "Người Chơi";
+        let myName = "";
         let oppName = "Đối Thủ";
 
         let rows = [3, 4, 7], selRow = null, selCount = 0;
         let scores = {you: 0, opp: 0};
 
-        // --- KẾT NỐI MẠNG LOBBY ---
         peer.on('open', id => { 
             myId = id; 
             document.getElementById('my-id').innerText = id; 
@@ -121,24 +147,33 @@
         });
         
         peer.on('connection', c => { 
+            const inputName = document.getElementById('my-name-input').value.trim();
+            if (!inputName) {
+                alert("Ai đó đang cố kết nối nhưng bạn chưa nhập tên! Hãy nhập tên để có thể chơi.");
+                return;
+            }
+            
             conn = c; 
             isBotMode = false;
             saveMyName();
             setupConn(); 
             
-            // Host sẽ là người tung đồng xu và gửi tên qua cho Guest
             const randomStarter = Math.random() < 0.5;
             setTimeout(() => {
                 conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName});
-                startRandomSequence(randomStarter, oppName); // Tạm gọi đối thủ, sẽ update khi nhận data
+                startRandomSequence(randomStarter, oppName); 
             }, 500);
         });
 
+        // HÀM KIỂM TRA TÊN VÀ KẾT NỐI (Chơi Online)
         function connectToPeer() {
+            const inputName = document.getElementById('my-name-input').value.trim();
             const id = document.getElementById('peer-id-input').value.trim();
-            if(!id) return alert("Vui lòng nhập ID đối thủ!");
-            saveMyName();
             
+            if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi bắt đầu!");
+            if (!id) return alert("Vui lòng nhập ID phòng của đối thủ!");
+            
+            saveMyName();
             conn = peer.connect(id);
             isBotMode = false;
             setupConn();
@@ -146,12 +181,10 @@
         }
 
         function saveMyName() {
-            const inputName = document.getElementById('my-name-input').value.trim();
-            if (inputName) myName = inputName;
+            myName = document.getElementById('my-name-input').value.trim();
         }
 
         function setupConn() {
-            // Khi Guest vừa kết nối, gửi tên của Guest cho Host
             conn.on('open', () => {
                 conn.send({type: 'USER_INFO', name: myName});
             });
@@ -162,7 +195,7 @@
                     document.getElementById('name-opp').innerText = oppName;
                 }
                 if(data.type === 'START_INFO') { 
-                    oppName = data.hostName; // Nhận tên từ Host
+                    oppName = data.hostName; 
                     document.getElementById('name-opp').innerText = oppName;
                     startRandomSequence(data.youStart, oppName); 
                 }
@@ -173,8 +206,11 @@
             });
         }
 
-        // --- CHẾ ĐỘ CHƠI VỚI MÁY (BOT MISÈRE NIM) ---
+        // HÀM KIỂM TRA TÊN VÀ CHƠI VỚI MÁY
         function startBotMode() {
+            const inputName = document.getElementById('my-name-input').value.trim();
+            if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi chơi với máy!");
+            
             saveMyName();
             isBotMode = true;
             oppName = "Bot Master 🤖";
@@ -185,36 +221,29 @@
         }
 
         function executeBotTurn() {
-            updateTurnText(false, true); // Đổi text thành Bot đang nghĩ
-            
+            updateTurnText(false, true); 
             setTimeout(() => {
                 let move = getBestBotMove(rows);
                 rows[move.row] -= move.take;
                 isMyTurn = true;
                 render();
                 checkWin("OPP");
-            }, 1000 + Math.random() * 1000); // Delay 1-2s cho giống người thật
+            }, 1000 + Math.random() * 1000); 
         }
 
         function getBestBotMove(board) {
             let counts = board.slice();
             let nonOnes = counts.filter(x => x > 1).length;
 
-            // TRƯỜNG HỢP ĐẶC BIỆT: Giai đoạn cuối game (Luật lấy cuối là thua)
-            // Nếu chỉ còn ĐÚNG 1 hàng có số lượng > 1, và các hàng khác đều là 1
             if (nonOnes === 1) {
                 let ones = counts.filter(x => x === 1).length;
                 let targetIndex = counts.findIndex(x => x > 1);
-                
-                // Thuật toán: Làm sao để tổng số lượng các hàng có 1 viên là SỐ LẺ
                 let leaveAmount = (ones % 2 === 0) ? 1 : 0;
                 let takeAmount = counts[targetIndex] - leaveAmount;
                 return { row: targetIndex, take: takeAmount };
             }
 
-            // TRƯỜNG HỢP BÌNH THƯỜNG: Tính toán Nim-sum (XOR)
             let nimSum = counts.reduce((a, b) => a ^ b, 0);
-            
             if (nimSum !== 0) {
                 for (let i = 0; i < counts.length; i++) {
                     let target = counts[i] ^ nimSum;
@@ -224,13 +253,11 @@
                 }
             }
 
-            // Nếu Nim-sum = 0 (Tình thế Bot đang bất lợi), bốc bừa 1 viên ở hàng ngẫu nhiên để câu giờ
             let available = counts.map((v, i) => ({v, i})).filter(x => x.v > 0);
             let randRow = available[Math.floor(Math.random() * available.length)];
             return { row: randRow.i, take: 1 };
         }
 
-        // --- GIAO DIỆN & LOGIC CHUNG ---
         function startRandomSequence(iStart, opponentName) {
             const overlay = document.getElementById('randomizing-overlay');
             overlay.style.display = 'flex';
@@ -288,15 +315,10 @@
             isMyTurn = false; selRow = null; selCount = 0;
             document.getElementById('btn-move').disabled = true;
             
-            if (!isBotMode) {
-                conn.send({type: 'MOVE', rows: rows});
-            }
-            
+            if (!isBotMode) conn.send({type: 'MOVE', rows: rows});
             render();
             
-            if (!checkWin("YOU") && isBotMode) {
-                executeBotTurn();
-            }
+            if (!checkWin("YOU") && isBotMode) executeBotTurn();
         }
 
         function updateTurnText(isMe, isBotThinking = false) {
@@ -331,23 +353,17 @@
 
         function requestRestart() { 
             if (isBotMode) {
-                // Tự reset nếu chơi với máy
                 resetGame();
                 const randomStarter = Math.random() < 0.5;
                 isMyTurn = randomStarter;
                 startRandomSequence(randomStarter, oppName);
             } else {
-                // Gửi tín hiệu nếu chơi online
                 conn.send({type: 'RESTART'}); 
                 resetGame();
             }
         }
 
-        function resetGame() {
-            resetGameUI();
-            // Người thua ván trước sẽ được quyền đi trước (Luật bất thành văn của boardgame)
-            // Hoặc có thể random lại. Ở đây giữ nguyên logic chờ đối thủ đánh nếu họ đi trước.
-        }
+        function resetGame() { resetGameUI(); }
 
         function resetGameUI() {
             rows = [3, 4, 7]; selRow = null; selCount = 0;
