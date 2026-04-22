@@ -54,15 +54,13 @@
         }
         .circle.selected { background: var(--blue); border-color: white; box-shadow: 0 0 20px var(--blue); transform: scale(1.1); }
         
-        /* CLASS MỚI ĐỂ LÀM MỜ VÒNG TRÒN ĐÃ ĐÁNH */
         .circle.dimmed { 
-            opacity: 0.15; /* Làm mờ đi */
-            cursor: not-allowed; /* Đổi con trỏ chuột */
-            pointer-events: none; /* Khóa hoàn toàn không cho click */
+            opacity: 0.15; 
+            cursor: not-allowed; 
             background: transparent;
             border-color: #334155;
             box-shadow: none;
-            transform: scale(0.9); /* Thu nhỏ lại một chút cho đẹp */
+            transform: scale(0.9); 
         }
 
         .indicator {
@@ -140,15 +138,16 @@
         
         let localReady = false;
         let remoteReady = false;
-        
         let amILoser = false; 
 
         let myName = "";
         let oppName = "Đối Thủ";
 
-        // Thêm mảng initialRows để ghi nhớ cấu trúc ban đầu
+        // CẤU TRÚC LÕI MỚI: Ma trận lưu trạng thái của TỪNG viên (true = còn, false = đã bị lấy/mờ)
         const initialRows = [3, 4, 7];
-        let rows = [...initialRows], selRow = null, selCount = 0;
+        let boardState = []; 
+        let selRow = null; 
+        let selectedIndices = []; // Lưu các viên được chọn theo vị trí (index)
         let scores = {you: 0, opp: 0};
 
         peer.on('open', id => { 
@@ -219,7 +218,10 @@
                     startTurnSequence(data.youStart, oppName, data.isRandom); 
                 }
                 if(data.type === 'MOVE') { 
-                    rows = data.rows; isMyTurn = true; render(); checkWin("OPP"); 
+                    boardState = data.board; // Cập nhật mảng ma trận từ đối thủ
+                    isMyTurn = true; 
+                    render(); 
+                    checkWin("OPP"); 
                 }
                 if(data.type === 'READY_UP') {
                     remoteReady = true;
@@ -250,16 +252,26 @@
         function executeBotTurn() {
             updateTurnText(false, true); 
             setTimeout(() => {
-                let move = getBestBotMove(rows);
-                rows[move.row] -= move.take;
+                // Đếm số lượng thực tế còn lại của mỗi hàng để chuyển cho Bot tính toán
+                let currentRows = boardState.map(row => row.filter(isActive => isActive).length);
+                let move = getBestBotMove(currentRows);
+                
+                // Bot chọn lấy 'move.take' viên ở hàng 'move.row'
+                let taken = 0;
+                for(let i = 0; i < boardState[move.row].length; i++) {
+                    if (boardState[move.row][i] && taken < move.take) {
+                        boardState[move.row][i] = false; // Đánh dấu là đã lấy/mờ đi
+                        taken++;
+                    }
+                }
+                
                 isMyTurn = true;
                 render();
                 checkWin("OPP");
             }, 1000 + Math.random() * 1000); 
         }
 
-        function getBestBotMove(board) {
-            let counts = board.slice();
+        function getBestBotMove(counts) {
             let nonOnes = counts.filter(x => x > 1).length;
 
             if (nonOnes === 1) {
@@ -289,7 +301,6 @@
             const overlay = document.getElementById('randomizing-overlay');
             overlay.style.display = 'flex';
             document.getElementById('name-you').innerText = myName;
-            
             document.getElementById('random-msg').style.color = "var(--gold)"; 
 
             if (isRandom) {
@@ -321,57 +332,74 @@
             resetGameUI();
         }
 
-        // --- HÀM RENDER MỚI: VẼ CẢ VIÊN CÒN VÀ VIÊN ĐÃ BỊ LẤY (MỜ ĐI) ---
+        // HÀM RENDER MỚI: DUYỆT TỪNG VIÊN THEO MA TRẬN
         function render() {
             const b = document.getElementById('board'); 
             b.innerHTML = '';
             
-            initialRows.forEach((totalCount, rIdx) => {
+            boardState.forEach((rowArray, rIdx) => {
                 const rDiv = document.createElement('div'); 
                 rDiv.className = 'row';
                 
-                const activeCount = rows[rIdx];
-                const removedCount = totalCount - activeCount;
-
-                // 1. Vẽ các viên còn lại có thể click
-                for(let i=0; i<activeCount; i++) {
+                rowArray.forEach((isActive, cIdx) => {
                     const c = document.createElement('div'); 
-                    c.className = 'circle';
-                    c.onclick = () => select(rIdx, c);
+                    
+                    if (isActive) {
+                        c.className = 'circle';
+                        // Nếu viên này đang được click chọn
+                        if (selRow === rIdx && selectedIndices.includes(cIdx)) {
+                            c.classList.add('selected');
+                        }
+                        c.onclick = () => select(rIdx, cIdx);
+                    } else {
+                        // Viên đã bị lấy đi thì vẽ mờ
+                        c.className = 'circle dimmed'; 
+                    }
+                    
                     rDiv.appendChild(c);
-                }
-
-                // 2. Vẽ các viên đã bị lấy (làm mờ, không click được)
-                for(let i=0; i<removedCount; i++) {
-                    const c = document.createElement('div'); 
-                    c.className = 'circle dimmed'; 
-                    rDiv.appendChild(c);
-                }
-
+                });
+                
                 b.appendChild(rDiv);
             });
             updateTurnText(isMyTurn, false);
         }
 
-        function select(r, el) {
+        function select(rIdx, cIdx) {
             if(!isMyTurn) return;
-            if(selRow !== null && selRow !== r) {
-                document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-                selCount = 0;
+            
+            // Nếu click sang hàng khác thì xóa bỏ mọi lựa chọn ở hàng cũ
+            if(selRow !== null && selRow !== rIdx) {
+                selectedIndices = [];
             }
-            el.classList.toggle('selected');
-            selRow = r;
-            selCount = document.querySelectorAll('.selected').length;
-            if(selCount === 0) selRow = null;
-            document.getElementById('btn-move').disabled = selCount === 0;
+            selRow = rIdx;
+            
+            // Bật/tắt viên vừa click
+            const pos = selectedIndices.indexOf(cIdx);
+            if (pos > -1) {
+                selectedIndices.splice(pos, 1);
+            } else {
+                selectedIndices.push(cIdx);
+            }
+            
+            if(selectedIndices.length === 0) selRow = null;
+            document.getElementById('btn-move').disabled = selectedIndices.length === 0;
+            
+            render(); // Gọi vẽ lại để hiện viền đỏ
         }
 
         function makeMove() {
-            rows[selRow] -= selCount;
-            isMyTurn = false; selRow = null; selCount = 0;
+            // Chuyển các viên được chọn sang trạng thái false (đã bị lấy/mờ)
+            selectedIndices.forEach(cIdx => {
+                boardState[selRow][cIdx] = false;
+            });
+            
+            isMyTurn = false; 
+            selRow = null; 
+            selectedIndices = [];
             document.getElementById('btn-move').disabled = true;
             
-            if (!isBotMode) conn.send({type: 'MOVE', rows: rows});
+            // Gửi toàn bộ ma trận sang cho đối thủ
+            if (!isBotMode) conn.send({type: 'MOVE', board: boardState});
             render();
             
             if (!checkWin("YOU") && isBotMode) executeBotTurn();
@@ -389,10 +417,12 @@
         }
 
         function checkWin(last) {
-            if(rows.reduce((a,b)=>a+b,0) === 0) {
+            // Kiểm tra xem còn viên nào active (true) trên bàn cờ không
+            const activeCount = boardState.flat().filter(isActive => isActive).length;
+            
+            if(activeCount === 0) {
                 const winName = (last === "YOU" ? oppName : myName);
                 const isYouWin = (winName === myName);
-                
                 amILoser = !isYouWin; 
 
                 if(isYouWin) scores.you++; else scores.opp++;
@@ -409,7 +439,6 @@
             return false;
         }
 
-        // --- CƠ CHẾ SẴN SÀNG (READY) ---
         function requestRestart() { 
             if (isBotMode) {
                 const overlay = document.getElementById('ready-overlay');
@@ -465,10 +494,11 @@
         }
 
         function resetGameUI() {
-            // Khôi phục lại mảng trạng thái dựa trên cấu trúc ban đầu
-            rows = [...initialRows]; 
+            // Khởi tạo ma trận mới tinh: [3 cái true], [4 cái true], [7 cái true]
+            boardState = initialRows.map(count => Array(count).fill(true)); 
+            
             selRow = null; 
-            selCount = 0;
+            selectedIndices = [];
             document.getElementById('btn-restart').style.display = 'none';
             document.getElementById('btn-move').style.display = 'block';
             document.getElementById('btn-move').disabled = true;
