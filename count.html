@@ -3,123 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Đếm Số Chiến Lược</title>
+    <title>Đếm Số Mục Tiêu - Boardgame Hub</title>
     <style>
-        /* CSS trang trí giao diện */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+        
+        :root {
+            --gold: #f59e0b; 
+            --dark: #0f172a; 
+            --glass-bg: rgba(30, 41, 59, 0.8);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --p1-color: #3b82f6; /* Xanh dương cho P1 */
+            --p2-color: #ef4444; /* Đỏ cho P2 */
+        }
+        
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
+            font-family: 'Montserrat', sans-serif; 
+            background: var(--dark);
+            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            color: #f8fafc; 
+            margin: 0; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
             justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .game-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 100%;
-            max-width: 450px;
-        }
-        h1 {
-            color: #2c3e50;
-            margin-top: 0;
-        }
-        .rule {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-        input[type="number"] {
-            width: 80px;
-            padding: 10px;
-            font-size: 16px;
-            border: 2px solid #bdc3c7;
-            border-radius: 6px;
-            text-align: center;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            color: white;
-            background-color: #3498db;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin: 5px;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        .btn-action {
-            background-color: #2ecc71;
-            width: 80px;
-            height: 50px;
-            font-size: 20px;
-        }
-        .btn-action:hover {
-            background-color: #27ae60;
-        }
-        .btn-action:disabled {
-            background-color: #95a5a6;
-            cursor: not-allowed;
-        }
-        .status-box {
-            background-color: #ecf0f1;
             padding: 20px;
+        }
+
+        .game-wrapper {
+            background: var(--glass-bg); 
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border); 
+            border-radius: 24px;
+            padding: 40px; 
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: var(--gold); 
+            font-size: 2.2rem; 
+            margin-top: 0;
+            margin-bottom: 10px; 
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); 
+        }
+
+        .rule {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+            line-height: 1.5;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
+            border-radius: 12px;
+        }
+
+        /* Form Inputs */
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
             border-radius: 8px;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+        }
+
+        /* Nút bấm */
+        button {
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: black;
+            background-color: var(--gold);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-back {
+            display: inline-block; 
+            margin-top: 20px; 
+            padding: 10px 20px;
+            background: transparent; 
+            color: #94a3b8; 
+            border: 1px solid #94a3b8;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+
+        .btn-back:hover {
+            color: white;
+            border-color: white;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Gameplay Area */
+        .status-box {
+            background-color: rgba(0,0,0,0.4);
+            padding: 20px;
+            border-radius: 16px;
             margin: 20px 0;
+            border: 1px solid var(--glass-border);
         }
+
         .number-display {
-            font-size: 48px;
-            font-weight: bold;
-            color: #e74c3c;
-            margin: 10px 0;
+            font-size: 60px;
+            font-weight: 800;
+            color: var(--gold);
+            margin: 15px 0;
+            text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
         }
+
         .player-turn {
-            font-size: 20px;
-            font-weight: bold;
-            color: #8e44ad;
+            font-size: 1.2rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: 0.3s;
         }
-        .player-2-turn {
-            color: #d35400; /* Đổi màu cho người chơi 2 */
+
+        .btn-action {
+            width: 30%;
+            height: 60px;
+            font-size: 24px;
+            background-color: #10b981;
+            color: white;
+            margin: 0 1%;
+            border-radius: 12px;
         }
+
+        .btn-action:hover {
+            background-color: #059669;
+        }
+
+        .btn-action:disabled {
+            background-color: #475569;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
         /* Ẩn các khu vực chưa cần thiết */
         #gameplay-area, #result-area {
             display: none;
+        }
+
+        @media (max-width: 500px) {
+            .game-wrapper { padding: 25px 20px; }
+            h1 { font-size: 1.8rem; }
+            .btn-action { font-size: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="game-container">
-        <h1>🎯 Đếm Số Chiến Lược</h1>
-        <div class="rule">Mỗi lượt chọn đếm thêm 1, 2 hoặc 3 số.<br>Ai đếm tới đích trước sẽ <b>CHIẾN THẮNG</b>!</div>
-
+    <div class="game-wrapper">
+        <h1>ĐẾM SỐ CHIẾN LƯỢC</h1>
+        
         <div id="setup-area">
-            <h3>Nhập số mục tiêu:</h3>
-            <input type="number" id="targetInput" value="30" min="5">
-            <br><br>
-            <button onclick="startGame()">Bắt Đầu Chơi</button>
+            <div class="rule">
+                ⚔️ <b>CÁCH CHƠI:</b><br>Mỗi lượt chọn đếm thêm +1, +2 hoặc +3.<br>Ai đếm tới đích trước sẽ là người chiến thắng!
+            </div>
+
+            <div class="input-group">
+                <label>Tên Người chơi 1 (Chủ phòng):</label>
+                <input type="text" id="p1Name" placeholder="Nhập tên của bạn..." autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label>Tên Người chơi 2 (Đối thủ):</label>
+                <input type="text" id="p2Name" placeholder="Nhập tên đối thủ..." autocomplete="off">
+            </div>
+
+            <div class="input-group">
+                <label>Số mục tiêu (Đích đến):</label>
+                <input type="number" id="targetInput" value="30" min="5">
+            </div>
+
+            <button onclick="createRoom()">Tạo Phòng & Chơi Ngay</button>
+            <br>
+            <a href="index.html" class="btn-back">⬅ Quay lại Sảnh</a>
         </div>
 
         <div id="gameplay-area">
-            <div class="status-box">
-                <div>Mục tiêu cần đạt: <b id="targetDisplay">30</b></div>
-                <div class="number-display" id="currentNumberDisplay">0</div>
-                <div>Khoảng cách đến đích: <b id="remainingDisplay">30</b></div>
+            <div style="text-align: right; font-size: 0.85rem; color: #94a3b8;">
+                Mã phòng: <b id="roomCodeDisplay" style="color: white;">#----</b>
             </div>
 
-            <div class="player-turn" id="playerTurnDisplay">Đến lượt: Người chơi 1</div>
-            <br>
+            <div class="status-box">
+                <div style="color: #cbd5e1;">Mục tiêu cần đạt: <b id="targetDisplay" style="color: white; font-size: 1.2rem;">30</b></div>
+                <div class="number-display" id="currentNumberDisplay">0</div>
+                <div style="color: #cbd5e1;">Khoảng cách đến đích: <b id="remainingDisplay" style="color: white;">30</b></div>
+            </div>
+
+            <div class="player-turn" id="playerTurnDisplay">Đến lượt: P1</div>
             
-            <p>Chọn số lượng muốn đếm thêm:</p>
-            <div>
+            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
                 <button class="btn-action" id="btn1" onclick="countNumber(1)">+1</button>
                 <button class="btn-action" id="btn2" onclick="countNumber(2)">+2</button>
                 <button class="btn-action" id="btn3" onclick="countNumber(3)">+3</button>
@@ -127,8 +246,12 @@
         </div>
 
         <div id="result-area">
-            <h2 id="winnerText" style="color: #e74c3c;">🎉 Người chơi X chiến thắng! 🎉</h2>
-            <button onclick="resetGame()">Chơi Lại Ván Khác</button>
+            <h1 style="font-size: 3rem; margin-bottom: 0;">🏆</h1>
+            <h2 id="winnerText" style="color: var(--gold); margin-top: 10px;">🎉 Người chơi chiến thắng! 🎉</h2>
+            <p style="color: #94a3b8; margin-bottom: 30px;">Trận đấu kết thúc ở mốc số <b id="finalTargetText">30</b>.</p>
+            <button onclick="resetGame()">Chơi Ván Mới</button>
+            <br>
+            <a href="index.html" class="btn-back">⬅ Rời Phòng & Về Sảnh</a>
         </div>
     </div>
 
@@ -136,14 +259,24 @@
         // Các biến lưu trữ trạng thái trò chơi
         let targetNumber = 30;
         let currentNumber = 0;
-        let currentPlayer = 1;
+        let currentPlayer = 1; // 1 hoặc 2
+        let p1Name = "";
+        let p2Name = "";
 
-        // Hàm bắt đầu game
-        function startGame() {
+        // Hàm tạo phòng và bắt đầu game
+        function createRoom() {
+            p1Name = document.getElementById("p1Name").value.trim();
+            p2Name = document.getElementById("p2Name").value.trim();
             let inputVal = parseInt(document.getElementById("targetInput").value);
             
+            // Kiểm tra điều kiện bắt buộc
+            if (p1Name === "" || p2Name === "") {
+                alert("⚠ Vui lòng nhập đầy đủ tên cho cả 2 người chơi!");
+                return;
+            }
+
             if (isNaN(inputVal) || inputVal < 5) {
-                alert("Vui lòng nhập số mục tiêu hợp lệ (lớn hơn hoặc bằng 5)!");
+                alert("⚠ Vui lòng nhập số mục tiêu hợp lệ (nhỏ nhất là 5)!");
                 return;
             }
 
@@ -153,6 +286,11 @@
 
             // Cập nhật giao diện
             document.getElementById("targetDisplay").innerText = targetNumber;
+            document.getElementById("finalTargetText").innerText = targetNumber;
+            
+            // Giả lập tạo mã phòng ngẫu nhiên (4 số)
+            document.getElementById("roomCodeDisplay").innerText = "#" + Math.floor(1000 + Math.random() * 9000);
+
             updateUI();
 
             // Chuyển đổi màn hình
@@ -161,41 +299,38 @@
             document.getElementById("result-area").style.display = "none";
         }
 
-        // Hàm xử lý khi người chơi bấm nút +1, +2, +3
         function countNumber(step) {
-            // Ngăn chặn việc đếm lố số mục tiêu
-            if (currentNumber + step > targetNumber) {
-                alert("Cảnh báo: Không được đếm vượt quá số mục tiêu!");
-                return;
-            }
+            if (currentNumber + step > targetNumber) return;
 
-            // Cộng số
             currentNumber += step;
             
-            // Kiểm tra chiến thắng
             if (currentNumber === targetNumber) {
                 updateUI();
                 endGame();
             } else {
-                // Đổi lượt người chơi
                 currentPlayer = currentPlayer === 1 ? 2 : 1;
                 updateUI();
             }
         }
 
-        // Hàm cập nhật các con số và nút bấm trên màn hình
         function updateUI() {
-            // Cập nhật số
             document.getElementById("currentNumberDisplay").innerText = currentNumber;
             document.getElementById("remainingDisplay").innerText = targetNumber - currentNumber;
 
-            // Cập nhật lượt chơi và đổi màu cho dễ nhìn
+            // Xử lý hiển thị tên và màu sắc theo lượt
             let turnText = document.getElementById("playerTurnDisplay");
-            turnText.innerText = `▶ Lượt của: NGƯỜI CHƠI ${currentPlayer} ◀`;
-            if (currentPlayer === 2) {
-                turnText.classList.add("player-2-turn");
+            let activeName = currentPlayer === 1 ? p1Name : p2Name;
+            
+            turnText.innerText = `▶ Lượt của: ${activeName.toUpperCase()} ◀`;
+            
+            if (currentPlayer === 1) {
+                turnText.style.backgroundColor = "rgba(59, 130, 246, 0.2)"; // Nền xanh dương
+                turnText.style.color = "var(--p1-color)";
+                turnText.style.border = "1px solid var(--p1-color)";
             } else {
-                turnText.classList.remove("player-2-turn");
+                turnText.style.backgroundColor = "rgba(239, 68, 68, 0.2)"; // Nền đỏ
+                turnText.style.color = "var(--p2-color)";
+                turnText.style.border = "1px solid var(--p2-color)";
             }
 
             // Vô hiệu hóa nút nếu cộng vào sẽ vượt quá mục tiêu
@@ -205,14 +340,13 @@
             document.getElementById("btn3").disabled = remaining < 3;
         }
 
-        // Hàm kết thúc game
         function endGame() {
+            let winnerName = currentPlayer === 1 ? p1Name : p2Name;
             document.getElementById("gameplay-area").style.display = "none";
             document.getElementById("result-area").style.display = "block";
-            document.getElementById("winnerText").innerText = `🎉 NGƯỜI CHƠI ${currentPlayer} CHIẾN THẮNG! 🎉`;
+            document.getElementById("winnerText").innerText = `🎉 ${winnerName.toUpperCase()} CHIẾN THẮNG! 🎉`;
         }
 
-        // Hàm reset về màn hình thiết lập
         function resetGame() {
             document.getElementById("setup-area").style.display = "block";
             document.getElementById("result-area").style.display = "none";
