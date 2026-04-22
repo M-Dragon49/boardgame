@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nim Game Online - Dark Edition</title>
+    <title>Ai Thắng Làm Vua - Game Nim Online</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
@@ -15,51 +15,57 @@
             font-family: 'Montserrat', sans-serif; background: var(--dark);
             background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
             color: #f8fafc; margin: 0; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box;
         }
-        .back-home { position: absolute; top: 20px; left: 20px; color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600; }
+        .back-home { position: fixed; top: 20px; left: 20px; color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600; z-index: 100; }
         .glass {
             background: var(--glass-bg); backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border); border-radius: 20px;
-            padding: 25px; width: 100%; max-width: 500px; margin-bottom: 20px; box-sizing: border-box;
+            padding: 25px; width: 100%; max-width: 500px; margin-top: 50px; box-sizing: border-box;
         }
-        h1 { text-align: center; color: var(--gold); text-shadow: 0 2px 10px rgba(0,0,0,0.5); margin: 0 0 20px 0; }
+        h1 { text-align: center; color: var(--gold); text-shadow: 0 2px 10px rgba(0,0,0,0.5); margin-bottom: 25px; text-transform: uppercase; }
         input {
-            width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px; border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.4); color: white; box-sizing: border-box;
+            width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.4); color: white; box-sizing: border-box; font-family: inherit;
         }
         button {
-            width: 100%; padding: 12px; border-radius: 12px; border: none; font-weight: bold;
-            cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; margin-bottom: 8px;
+            width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold;
+            cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s;
         }
+        button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
         button:disabled { opacity: 0.5; cursor: not-allowed; }
-        .row { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
+        .row { display: flex; justify-content: center; gap: 12px; margin: 18px 0; }
         .circle {
-            width: 45px; height: 45px; background: #1e293b; border: 2px solid #475569;
-            border-radius: 50%; cursor: pointer; transition: 0.2s;
+            width: 48px; height: 48px; background: #1e293b; border: 2px solid #475569;
+            border-radius: 50%; cursor: pointer; transition: 0.3s;
         }
-        .circle.selected { background: var(--blue); border-color: white; box-shadow: 0 0 15px var(--blue); }
-        .circle.removed { visibility: hidden; }
+        .circle.selected { background: var(--blue); border-color: white; box-shadow: 0 0 20px var(--blue); transform: scale(1.1); }
         .indicator {
-            text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 800;
-            background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+            text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 20px; font-weight: 800;
+            background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
         }
-        .score-box { display: flex; justify-content: space-around; margin-bottom: 15px; font-weight: bold; color: var(--gold); }
+        .score-box { display: flex; justify-content: space-around; margin-bottom: 20px; font-weight: bold; color: var(--gold); }
+        #randomizing-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--dark); z-index: 1000; display: none; flex-direction: column; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
-    <a href="index.html" class="back-home">⬅ QUAY LẠI</a>
+    <a href="index.html" class="back-home">⬅ TRANG CHỦ</a>
+
+    <div id="randomizing-overlay">
+        <h2 id="random-msg" style="color: var(--gold);">Đang tung đồng xu...</h2>
+        <p id="random-sub" style="color: #94a3b8;">Ai sẽ đi trước đây?</p>
+    </div>
 
     <div id="lobby" class="glass">
-        <h1>NIM ONLINE</h1>
-        <p style="text-align: center; font-size: 13px; color: #94a3b8;">Lấy viên cuối cùng sẽ THUA</p>
-        <div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 20px;">
-            <small>ID Của Bạn:</small>
-            <div id="my-id" style="font-size: 20px; font-weight: 800; color: var(--red);">...</div>
+        <h1>AI THẮNG LÀM VUA</h1>
+        <p style="text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Trò chơi chiến thuật lấy viên cuối là THUA</p>
+        <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 20px;">
+            <small style="color: #94a3b8;">ID Của Bạn:</small>
+            <div id="my-id" style="font-size: 22px; font-weight: 800; color: var(--red); letter-spacing: 2px;">...</div>
         </div>
         <input type="text" id="peer-id-input" placeholder="Nhập ID đối thủ">
-        <button onclick="connectToPeer()">THÁCH ĐẤU</button>
-        <p id="status" style="text-align:center; font-size: 12px; color: var(--green);">Đang khởi tạo mạng...</p>
+        <button onclick="connectToPeer()">BẮT ĐẦU THÁCH ĐẤU</button>
+        <p id="status" style="text-align:center; font-size: 12px; color: var(--green);">Đang kết nối server...</p>
     </div>
 
     <div id="game-view" class="glass" style="display:none;">
@@ -69,8 +75,8 @@
         </div>
         <div id="turn-txt" class="indicator">ĐANG CHỜ...</div>
         <div id="board"></div>
-        <button id="btn-move" onclick="makeMove()" disabled style="background: var(--green); margin-top: 20px;">XÁC NHẬN ĐI</button>
-        <button id="btn-restart" onclick="requestRestart()" style="display:none; background: var(--gold); color:black;">CHƠI LẠI</button>
+        <button id="btn-move" onclick="makeMove()" disabled style="background: var(--green); margin-top: 25px;">CHỐT LƯỢT ĐI</button>
+        <button id="btn-restart" onclick="requestRestart()" style="display:none; background: var(--gold); color:black;">VÁN MỚI</button>
     </div>
 
     <script>
@@ -79,23 +85,47 @@
         let rows = [3, 4, 7], selRow = null, selCount = 0;
         let scores = {you: 0, opp: 0};
 
-        peer.on('open', id => { myId = id; document.getElementById('my-id').innerText = id; document.getElementById('status').innerText = "Sẵn sàng!"; });
-        peer.on('connection', c => { conn = c; setupConn(); isMyTurn = true; startUI(); });
+        peer.on('open', id => { myId = id; document.getElementById('my-id').innerText = id; document.getElementById('status').innerText = "Sẵn sàng nhận thách đấu!"; });
+        
+        peer.on('connection', c => { 
+            conn = c; 
+            setupConn(); 
+            // Host sẽ là người tung đồng xu
+            const randomStarter = Math.random() < 0.5;
+            setTimeout(() => {
+                conn.send({type: 'START_INFO', youStart: !randomStarter});
+                startRandomSequence(randomStarter);
+            }, 500);
+        });
 
         function connectToPeer() {
             const id = document.getElementById('peer-id-input').value;
             if(!id) return;
             conn = peer.connect(id);
             setupConn();
-            isMyTurn = false;
-            startUI();
+            document.getElementById('status').innerText = "Đang kết nối với đối thủ...";
         }
 
         function setupConn() {
             conn.on('data', data => {
+                if(data.type === 'START_INFO') { startRandomSequence(data.youStart); }
                 if(data.type === 'MOVE') { rows = data.rows; isMyTurn = true; render(); checkWin("OPP"); }
                 if(data.type === 'RESTART') { resetGame(); }
             });
+        }
+
+        function startRandomSequence(iStart) {
+            const overlay = document.getElementById('randomizing-overlay');
+            overlay.style.display = 'flex';
+            setTimeout(() => {
+                document.getElementById('random-msg').innerText = iStart ? "BẠN ĐI TRƯỚC!" : "ĐỐI THỦ ĐI TRƯỚC!";
+                document.getElementById('random-msg').style.color = iStart ? "var(--green)" : "var(--red)";
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    isMyTurn = iStart;
+                    startUI();
+                }, 1500);
+            }, 1500);
         }
 
         function startUI() {
@@ -120,7 +150,10 @@
 
         function select(r, el) {
             if(!isMyTurn) return;
-            if(selRow !== null && selRow !== r) return alert("Chỉ chọn trong 1 hàng!");
+            if(selRow !== null && selRow !== r) {
+                document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
+                selCount = 0;
+            }
             el.classList.toggle('selected');
             selRow = r;
             selCount = document.querySelectorAll('.selected').length;
@@ -139,8 +172,8 @@
 
         function updateTurn() {
             const t = document.getElementById('turn-txt');
-            t.innerText = isMyTurn ? "🟢 LƯỢT CỦA BẠN" : "⏳ LƯỢT ĐỐI THỦ";
-            t.style.color = isMyTurn ? "var(--green)" : "var(--red)";
+            t.innerText = isMyTurn ? "🟢 LƯỢT CỦA BẠN" : "⏳ ĐỐI THỦ ĐANG NGHĨ...";
+            t.style.color = isMyTurn ? "var(--green)" : "#94a3b8";
         }
 
         function checkWin(last) {
@@ -149,7 +182,7 @@
                 if(win === "BẠN") scores.you++; else scores.opp++;
                 document.getElementById('s-you').innerText = scores.you;
                 document.getElementById('s-opp').innerText = scores.opp;
-                document.getElementById('turn-txt').innerText = win + " THẮNG!";
+                document.getElementById('turn-txt').innerText = win + " ĐÃ THẮNG CHIẾN THUẬT!";
                 document.getElementById('btn-restart').style.display = 'block';
                 document.getElementById('btn-move').style.display = 'none';
             }
