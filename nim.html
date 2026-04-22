@@ -122,7 +122,7 @@
     <script>
         const peer = new Peer();
         let conn, myId;
-        let isHost = false; // Phân biệt người tạo phòng và người tham gia
+        let isHost = false; 
         let isMyTurn = false;
         let isBotMode = false;
         
@@ -141,7 +141,7 @@
             document.getElementById('status').innerText = "Sẵn sàng nhận thách đấu!"; 
         });
         
-        // Khi CÓ NGƯỜI KẾT NỐI VÀO (Mình là Host)
+        // BẢN VÁ LỖI PEERJS: Host chờ Guest kết nối hẳn mới gửi lệnh Start
         peer.on('connection', c => { 
             const inputName = document.getElementById('my-name-input').value.trim();
             if (!inputName) {
@@ -155,15 +155,23 @@
             saveMyName();
             setupConn(); 
             
-            // Host tung đồng xu lần đầu
-            const randomStarter = Math.random() < 0.5;
-            setTimeout(() => {
+            const startSequence = () => {
+                const randomStarter = Math.random() < 0.5;
                 conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName});
                 startRandomSequence(randomStarter, oppName); 
-            }, 500);
+            };
+
+            // ĐẢM BẢO đường truyền thực sự mở trước khi gửi
+            if (conn.open) {
+                setTimeout(startSequence, 500);
+            } else {
+                conn.on('open', () => {
+                    setTimeout(startSequence, 500);
+                });
+            }
         });
 
-        // KHI MÌNH KẾT NỐI VÀO NGƯỜI KHÁC (Mình là Guest)
+        // GUEST KẾT NỐI
         function connectToPeer() {
             const inputName = document.getElementById('my-name-input').value.trim();
             const id = document.getElementById('peer-id-input').value.trim();
@@ -173,7 +181,7 @@
             
             isHost = false;
             saveMyName();
-            conn = peer.connect(id);
+            conn = peer.connect(id, { reliable: true });
             isBotMode = false;
             setupConn();
             document.getElementById('status').innerText = "Đang kết nối với đối thủ...";
@@ -184,12 +192,14 @@
         }
 
         function setupConn() {
-            // Gửi tên của mình cho đối thủ
-            conn.on('open', () => {
+            // FIX: Gửi tên một cách an toàn
+            const sendUserInfo = () => {
                 conn.send({type: 'USER_INFO', name: myName});
-            });
+            };
+            
+            if (conn.open) { sendUserInfo(); } 
+            else { conn.on('open', sendUserInfo); }
 
-            // Lắng nghe dữ liệu
             conn.on('data', data => {
                 if(data.type === 'USER_INFO') {
                     oppName = data.name;
@@ -199,7 +209,6 @@
                     oppName = data.hostName; 
                     document.getElementById('name-opp').innerText = oppName;
                     
-                    // Xóa trạng thái Ready nếu là vòng chơi lại
                     localReady = false; remoteReady = false;
                     document.getElementById('ready-overlay').style.display = 'none';
                     resetGameUI();
@@ -213,6 +222,15 @@
                     remoteReady = true;
                     checkBothReady();
                 }
+                if(data.type === 'RESTART') {
+                    // Logic tương thích cũ (nếu có)
+                    resetGameUI();
+                }
+            });
+            
+            conn.on('close', () => {
+                alert("Đối thủ đã ngắt kết nối!");
+                window.location.reload();
             });
         }
 
@@ -364,7 +382,6 @@
         // --- CƠ CHẾ SẴN SÀNG (READY) ---
         function requestRestart() { 
             if (isBotMode) {
-                // Chơi với Bot thì vào luôn 2/2
                 const overlay = document.getElementById('ready-overlay');
                 const statusText = document.getElementById('ready-status');
                 overlay.style.display = 'flex';
@@ -378,9 +395,8 @@
                     startRandomSequence(randomStarter, oppName);
                 }, 1000);
             } else {
-                // Chơi online
                 localReady = true;
-                document.getElementById('btn-restart').style.display = 'none'; // Ẩn nút sau khi bấm
+                document.getElementById('btn-restart').style.display = 'none'; 
                 conn.send({type: 'READY_UP'}); 
                 checkBothReady();
             }
@@ -391,18 +407,15 @@
             const statusText = document.getElementById('ready-status');
 
             if (localReady && !remoteReady) {
-                // Mình sẵn sàng nhưng đối thủ chưa
                 overlay.style.display = 'flex';
                 statusText.innerText = `Sẵn sàng: 1/2\n(Đang chờ ${oppName}...)`;
                 statusText.style.color = "var(--gold)";
             } 
             else if (!localReady && remoteReady) {
-                // Đối thủ sẵn sàng nhưng mình chưa (Báo hiệu lên UI)
                 document.getElementById('turn-txt').innerText = `${oppName.toUpperCase()} MUỐN CHƠI LẠI (1/2)`;
                 document.getElementById('turn-txt').style.color = "var(--gold)";
             } 
             else if (localReady && remoteReady) {
-                // Cả 2 cùng sẵn sàng
                 overlay.style.display = 'flex';
                 statusText.innerText = "Sẵn sàng: 2/2\nBắt đầu!";
                 statusText.style.color = "var(--green)";
@@ -413,7 +426,6 @@
                     remoteReady = false;
                     resetGameUI();
 
-                    // Chỉ Host mới là người gửi lệnh Tung đồng xu để đảm bảo đồng bộ
                     if (isHost) {
                         const randomStarter = Math.random() < 0.5;
                         conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName});
