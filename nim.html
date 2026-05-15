@@ -6,7 +6,8 @@
     <title>Ai Cuối Cùng Người Đó Chết</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+        /* Đổi sang font Be Vietnam Pro để khắc phục hoàn toàn lỗi font tiếng Việt */
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap');
         
         :root {
             --blue: #3b82f6; 
@@ -22,7 +23,7 @@
         * { box-sizing: border-box; }
 
         body {
-            font-family: 'Montserrat', sans-serif; 
+            font-family: 'Be Vietnam Pro', sans-serif; 
             background-color: var(--dark);
             color: #f8fafc; 
             margin: 0; 
@@ -110,7 +111,7 @@
         /* --- BUTTONS --- */
         button {
             width: 100%; padding: 16px 30px; border-radius: 50px; border: 2px solid transparent; 
-            font-weight: 800; font-size: 14px; letter-spacing: 1px;
+            font-weight: 800; font-size: 14px; font-family: 'Be Vietnam Pro', sans-serif; letter-spacing: 1px;
             cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; 
             margin-bottom: 12px; transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
@@ -131,7 +132,7 @@
         .circle {
             width: 55px; height: 55px; background: rgba(30, 41, 59, 0.9); border: 2px solid #475569;
             border-radius: 50%; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            flex-shrink: 0; /* Ngăn chặn vòng tròn bị méo */
+            flex-shrink: 0; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
         .circle:hover:not(.dimmed) { transform: scale(1.05); border-color: #94a3b8; }
@@ -170,11 +171,11 @@
         /* Tối ưu chống chèn ép trên Mobile */
         @media (max-width: 480px) {
             .circle {
-                width: 38px; height: 38px; /* Thu nhỏ gọn gàng */
+                width: 38px; height: 38px; 
                 border-width: 1px;
             }
             .row {
-                gap: 8px; /* Thu nhỏ khoảng cách */
+                gap: 8px; 
                 margin: 15px 0;
             }
             .glass { padding: 25px 15px; }
@@ -205,7 +206,7 @@
         <input type="text" id="my-name-input" placeholder="Bắt buộc nhập tên (Vd: Faker, Chovy...)" maxlength="15">
 
         <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.1);">
-            <small style="color: #94a3b8; font-weight: 600; text-transform: uppercase;">ID Phòng Của Bạn:</small>
+            <small style="color: #94a3b8; font-weight: 600; text-transform: uppercase;">Mã Phòng Của Bạn:</small>
             <div id="my-id" style="font-size: 24px; font-weight: 800; color: var(--red); letter-spacing: 2px; margin-top: 5px; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">...</div>
         </div>
         
@@ -218,7 +219,7 @@
         
         <button class="btn-bot" onclick="startBotMode()">🤖 CHƠI VỚI MÁY (BOT THÔNG MINH)</button>
 
-        <p id="status" style="text-align:center; font-size: 13px; color: var(--green); margin-top: 20px; font-weight: 600;">Đang kết nối server...</p>
+        <p id="status" style="text-align:center; font-size: 13px; color: var(--green); margin-top: 20px; font-weight: 600;">Đang khởi tạo máy chủ...</p>
     </div>
 
     <div id="game-view" class="glass" style="display:none;">
@@ -242,15 +243,26 @@
     </div>
 
     <script>
-      const peer = new Peer({
-    config: {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' }
-        ]
-    }
-});
+        // Đã cập nhật TURN Server để khắc phục lỗi không xuyên thủng được tường lửa mạng di động 4G/5G
+        const peer = new Peer({
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:global.stun.twilio.com:3478' },
+                    {
+                        urls: "turn:openrelay.metered.ca:80",
+                        username: "openrelayproject",
+                        credential: "openrelayproject"
+                    },
+                    {
+                        urls: "turn:openrelay.metered.ca:443",
+                        username: "openrelayproject",
+                        credential: "openrelayproject"
+                    }
+                ]
+            }
+        });
+        
         let conn, myId;
         let isHost = false; 
         let isMyTurn = false;
@@ -271,7 +283,7 @@
         peer.on('open', id => { 
             myId = id; 
             document.getElementById('my-id').innerText = id; 
-            document.getElementById('status').innerText = "Sẵn sàng nhận thách đấu!"; 
+            document.getElementById('status').innerText = "Máy chủ đã sẵn sàng!"; 
         });
         
         peer.on('connection', c => { 
@@ -302,14 +314,14 @@
             const id = document.getElementById('peer-id-input').value.trim();
             
             if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi bắt đầu!");
-            if (!id) return alert("Vui lòng nhập ID phòng của đối thủ!");
+            if (!id) return alert("Vui lòng nhập Mã phòng của đối thủ!");
             
             isHost = false;
             saveMyName();
             conn = peer.connect(id, { reliable: true });
             isBotMode = false;
             setupConn();
-            document.getElementById('status').innerText = "Đang kết nối với đối thủ...";
+            document.getElementById('status').innerText = "Đang kết nối vào phòng...";
         }
 
         function saveMyName() {
