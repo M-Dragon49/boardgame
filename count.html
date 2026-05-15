@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đếm Số Chiến Lược - Tới 100 Là Thắng!</title>
+    <title>Đếm Số Chiến Lược - Tùy Chỉnh Mục Tiêu</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         /* Sử dụng font Be Vietnam Pro để tiếng Việt hiển thị hoàn hảo 100% */
@@ -107,6 +107,10 @@
             outline: none; border-color: var(--gold); background: rgba(0,0,0,0.5);
             box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); 
         }
+        
+        .input-group {
+            display: flex; gap: 10px; margin-bottom: 15px;
+        }
 
         /* --- BUTTONS --- */
         button {
@@ -194,6 +198,7 @@
             .total-number { font-size: 65px; }
             .numpad { gap: 8px; }
             .num-btn { padding: 12px 0; font-size: 18px; }
+            .input-group { flex-direction: column; gap: 0; }
         }
     </style>
 </head>
@@ -214,14 +219,17 @@
     <!-- LOBBY CHỜ KẾT NỐI -->
     <div id="lobby" class="glass">
         <h1>ĐẾM SỐ<br>CHIẾN LƯỢC</h1>
-        <p style="text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 25px; line-height: 1.6;">Lần lượt cộng thêm từ +1 đến +10.<br>Ai đạt đến <b>MỐC 100</b> trước người đó sẽ giành chiến thắng!</p>
+        <p style="text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 25px; line-height: 1.6;">Lần lượt cộng thêm từ +1 đến +10.<br>Ai đạt đến <b>MỤC TIÊU</b> trước sẽ giành chiến thắng!</p>
         
-        <input type="text" id="my-name-input" placeholder="Nhập tên của bạn (Bắt buộc)" maxlength="15">
+        <div class="input-group">
+            <input type="text" id="my-name-input" placeholder="Tên của bạn (Bắt buộc)" maxlength="15" style="flex: 2;">
+            <input type="number" id="target-input" placeholder="Mục tiêu (Mặc định: 100)" min="15" max="9999" style="flex: 1;">
+        </div>
 
         <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.1);">
             <small style="color: #94a3b8; font-weight: 600; text-transform: uppercase;">Mã Phòng Của Bạn:</small>
             <div id="my-id" style="font-size: 24px; font-weight: 800; color: var(--red); letter-spacing: 2px; margin-top: 5px; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">...</div>
-            <small style="color: var(--gold); font-size: 12px; display: block; margin-top: 8px;">Gửi mã này cho bạn bè để họ Tham Gia</small>
+            <small style="color: var(--gold); font-size: 12px; display: block; margin-top: 8px;">Gửi mã này cho bạn bè để họ Tham Gia (Chủ phòng quyết định mục tiêu số)</small>
         </div>
         
         <input type="text" id="peer-id-input" placeholder="Nhập mã phòng của bạn bè để tham gia">
@@ -254,7 +262,7 @@
         
         <div class="total-display-wrapper">
             <div class="total-number" id="current-total">0</div>
-            <div class="target-text">MỤC TIÊU: 100</div>
+            <div class="target-text" id="target-display">MỤC TIÊU: 100</div>
         </div>
         
         <!-- Bàn phím số để chọn -->
@@ -275,12 +283,22 @@
     </div>
 
     <script>
+        // Đã cập nhật TURN Server để khắc phục lỗi không xuyên thủng được tường lửa mạng di động 4G/5G
         const peer = new Peer({
             config: {
                 iceServers: [
                     { urls: 'stun:stun.l.google.com:19302' },
-                    { urls: 'stun:stun1.l.google.com:19302' },
-                    { urls: 'stun:stun2.l.google.com:19302' }
+                    { urls: 'stun:global.stun.twilio.com:3478' },
+                    {
+                        urls: "turn:openrelay.metered.ca:80",
+                        username: "openrelayproject",
+                        credential: "openrelayproject"
+                    },
+                    {
+                        urls: "turn:openrelay.metered.ca:443",
+                        username: "openrelayproject",
+                        credential: "openrelayproject"
+                    }
                 ]
             }
         });
@@ -296,8 +314,8 @@
         let myName = "";
         let oppName = "Đối Thủ";
 
-        // Logic game đếm số
-        const TARGET = 100;
+        // Logic game đếm số với mục tiêu linh hoạt
+        let TARGET = 100;
         let currentTotal = 0; 
         let scores = {you: 0, opp: 0};
 
@@ -322,7 +340,13 @@
             
             const startSequence = () => {
                 const randomStarter = Math.random() < 0.5;
-                conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName, isRandom: true});
+                
+                // Host lấy dữ liệu Target từ ô input
+                let inputTarget = parseInt(document.getElementById('target-input').value);
+                TARGET = (isNaN(inputTarget) || inputTarget <= 10) ? 100 : inputTarget;
+                document.getElementById('target-display').innerText = `MỤC TIÊU: ${TARGET}`;
+
+                conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName, isRandom: true, target: TARGET});
                 startTurnSequence(randomStarter, oppName, true); 
             };
 
@@ -335,7 +359,7 @@
             const id = document.getElementById('peer-id-input').value.trim();
             
             if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi bắt đầu!");
-            if (!id) return alert("Vui lòng nhập mã phòng của bạn bè!");
+            if (!id) return alert("Vui lòng nhập Mã phòng của đối thủ!");
             
             isHost = false;
             saveMyName();
@@ -360,6 +384,8 @@
                 }
                 if(data.type === 'START_INFO') { 
                     oppName = data.hostName; 
+                    TARGET = data.target || 100; // Khách đồng bộ điểm mục tiêu từ Host
+                    document.getElementById('target-display').innerText = `MỤC TIÊU: ${TARGET}`;
                     document.getElementById('name-opp').innerText = oppName;
                     
                     localReady = false; remoteReady = false;
@@ -395,17 +421,22 @@
             oppName = "Bot Thông Minh 🤖";
             document.getElementById('name-opp').innerText = oppName;
             
+            // Thiết lập Target
+            let inputTarget = parseInt(document.getElementById('target-input').value);
+            TARGET = (isNaN(inputTarget) || inputTarget <= 10) ? 100 : inputTarget;
+            document.getElementById('target-display').innerText = `MỤC TIÊU: ${TARGET}`;
+
             const randomStarter = Math.random() < 0.5;
             startTurnSequence(randomStarter, oppName, true); 
         }
 
-        // --- BOT LOGIC (ĐẾM SỐ CHIẾN LƯỢC) ---
+        // --- BOT LOGIC (ĐẾM SỐ CHIẾN LƯỢC TÙY CHỈNH TARGET) ---
         function executeBotTurn() {
             updateTurnText(false, true); 
             setTimeout(() => {
                 let move = getBestBotMove(currentTotal);
                 
-                // An toàn: Đảm bảo Bot không vô tình cộng quá 100
+                // An toàn: Đảm bảo Bot không vô tình cộng quá Mục Tiêu
                 if (currentTotal + move > TARGET) {
                     move = TARGET - currentTotal;
                 }
@@ -418,15 +449,13 @@
         }
 
         function getBestBotMove(current) {
-            // Chiến thuật thắng: Đưa tổng về các bội số của 11 + 1 (vd: 12, 23, 34,... 89, 100)
-            // Tức là mục tiêu để lại cho người kia là (100 - X) chia hết cho 11.
+            // Chiến thuật thắng: Đưa tổng về các bội số của 11 để bắt thóp đối phương
+            // Mục tiêu để lại cho người kia là (TARGET - X) chia hết cho 11.
             let remainder = (TARGET - current) % 11;
             
             if (remainder === 0) {
-                // Đang nằm ở vị trí thua (ví dụ: đang là 89, cần 11 bước nữa mới tới 100)
-                // Bot chọn ngẫu nhiên từ 1 đến 10
+                // Đang nằm ở vị trí thua
                 let randomMove = Math.floor(Math.random() * 10) + 1;
-                // Nếu khoảng cách tới 100 nhỏ hơn 10 thì chỉ bốc ngẫu nhiên số nhỏ hơn
                 if (current + randomMove > TARGET) {
                     return TARGET - current;
                 }
@@ -470,14 +499,10 @@
 
         // --- XỬ LÝ NƯỚC ĐI VÀ GIAO DIỆN BÀN PHÍM ---
         function updateBoard() {
-            // Cập nhật số hiển thị
             const totalDisplay = document.getElementById('current-total');
             totalDisplay.innerText = currentTotal;
             
-            // Cập nhật text trạng thái
             updateTurnText(isMyTurn, false);
-            
-            // Bật/tắt bàn phím số
             toggleNumpad(isMyTurn);
         }
 
@@ -485,7 +510,7 @@
             const buttons = document.querySelectorAll('#numpad button');
             buttons.forEach((btn, index) => {
                 const val = index + 1; // Giá trị từ 1 đến 10
-                // Bật nút nếu đến lượt VÀ số đó không làm Tổng vượt qua 100
+                // Bật nút nếu đến lượt VÀ số đó không làm Tổng vượt qua MỤC TIÊU
                 if (enable && (currentTotal + val <= TARGET)) {
                     btn.disabled = false;
                 } else {
@@ -591,7 +616,7 @@
 
                     if (isHost) {
                         const randomStarter = Math.random() < 0.5;
-                        conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName, isRandom: true});
+                        conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName, isRandom: true, target: TARGET});
                         startTurnSequence(randomStarter, oppName, true);
                     }
                 }, 1000);
