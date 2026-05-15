@@ -3,356 +3,613 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đếm Số Chiến Lược - Boardgame Hub</title>
+    <title>Đếm Số Chiến Lược - Tới 100 Là Thắng!</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+        /* Sử dụng font Be Vietnam Pro để tiếng Việt hiển thị hoàn hảo 100% */
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap');
         
         :root {
+            --blue: #3b82f6; 
+            --red: #ef4444; 
             --gold: #f59e0b; 
-            --dark: #0f172a; 
-            --glass-bg: rgba(30, 41, 59, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.15);
-            --p1-color: #3b82f6; /* Xanh dương cho P1 */
-            --p2-color: #ef4444; /* Đỏ cho P2 */
+            --gold-light: #fbbf24;
+            --green: #10b981; 
+            --dark: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.5); 
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
         
         * { box-sizing: border-box; }
 
         body {
-            font-family: 'Montserrat', sans-serif; 
-            background: var(--dark);
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
+            font-family: 'Be Vietnam Pro', sans-serif; 
+            background-color: var(--dark);
             color: #f8fafc; 
             margin: 0; 
             min-height: 100vh;
             display: flex; 
             flex-direction: column; 
             align-items: center; 
-            justify-content: center;
-            padding: 20px;
+            padding: 40px 15px 20px 15px; 
+            overflow-x: hidden;
+            position: relative;
         }
 
-        .game-wrapper {
-            background: var(--glass-bg); 
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border); 
-            border-radius: 24px;
-            padding: 40px; 
-            width: 100%;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        /* --- BACKGROUND EFFECTS --- */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0) 70%);
+            z-index: -1;
+            animation: floating 10s infinite ease-in-out alternate;
+        }
+        body::after {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(15, 23, 42, 0) 70%);
+            top: auto;
+            bottom: -10%;
+            left: -10%;
+            animation-delay: -5s;
+        }
+        @keyframes floating {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(10%, 15%); }
+        }
+        
+        .back-home {
+            position: fixed; top: 20px; left: 20px; z-index: 1000;
+            background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 50px;
+            color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 700;
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .back-home:hover { 
+            color: white; border-color: var(--gold); 
+            transform: translateX(5px); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+            background: rgba(30, 41, 59, 0.8);
         }
 
-        h1 {
-            color: var(--gold); 
-            font-size: 2.2rem; 
-            margin-top: 0;
-            margin-bottom: 10px; 
-            text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(245, 158, 11, 0.3); 
+        .glass {
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            padding: 35px 25px; width: 100%; max-width: 500px; margin-top: 30px;
+            animation: fadeInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        .badge-test {
-            font-size: 1rem;
-            color: #ef4444;
-            vertical-align: middle;
-            text-transform: none;
-            font-weight: 600;
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .rule {
-            color: #cbd5e1;
-            font-size: 0.95rem;
-            margin-bottom: 25px;
-            line-height: 1.5;
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 12px;
+        h1 { 
+            text-align: center; 
+            margin-top: 0; margin-bottom: 15px; 
+            font-size: 2rem;
+            background: linear-gradient(to right, var(--gold-light), var(--gold), #ea580c);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent; text-transform: uppercase; letter-spacing: 2px;
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.3));
         }
 
-        /* Form Inputs */
-        .input-group {
-            margin-bottom: 15px;
-            text-align: left;
+        /* --- INPUTS --- */
+        input {
+            width: 100%; padding: 16px 25px; margin-bottom: 15px; 
+            border-radius: 50px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.3); color: white; font-size: 15px; font-family: inherit;
+            transition: all 0.3s ease; text-align: center;
+        }
+        input:focus { 
+            outline: none; border-color: var(--gold); background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); 
         }
 
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #94a3b8;
-        }
-
-        input[type="text"], input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--glass-border);
-            border-radius: 8px;
-            color: white;
-            font-family: 'Montserrat', sans-serif;
-            transition: 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
-        }
-
-        /* Nút bấm */
+        /* --- BUTTONS --- */
         button {
-            padding: 12px 30px;
-            font-size: 1rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: black;
-            background-color: var(--gold);
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-            margin-top: 10px;
-            width: 100%;
+            width: 100%; padding: 16px 30px; border-radius: 50px; border: 2px solid transparent; 
+            font-weight: 800; font-size: 14px; font-family: 'Be Vietnam Pro', sans-serif; letter-spacing: 1px;
+            cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; 
+            margin-bottom: 12px; transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
+        }
+        button:hover:not(:disabled) { 
+            transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); filter: brightness(1.1);
+        }
+        button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        
+        .btn-bot { background: #8b5cf6; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.2); } 
+        .btn-bot:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4); }
+        
+        .btn-gold { background: var(--gold); color: #000; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2); }
+        .btn-gold:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); }
+
+        /* --- GAMEPLAY UI --- */
+        .total-display-wrapper {
+            background: rgba(0,0,0,0.4); border-radius: 20px; padding: 30px 10px;
+            text-align: center; margin-bottom: 25px; border: 2px solid var(--glass-border);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
         }
 
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 20px rgba(245, 158, 11, 0.4);
+        .total-number {
+            font-size: 80px; font-weight: 800; line-height: 1;
+            color: white; text-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+            transition: all 0.3s ease;
         }
 
-        .btn-back {
-            display: inline-block; 
-            margin-top: 20px; 
-            padding: 10px 20px;
-            background: transparent; 
-            color: #94a3b8; 
-            border: 1px solid #94a3b8;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.85rem;
-            transition: 0.3s;
+        .target-text {
+            color: var(--gold); font-size: 14px; font-weight: 800; letter-spacing: 2px;
+            text-transform: uppercase; margin-top: 10px;
         }
 
-        .btn-back:hover {
-            color: white;
-            border-color: white;
-            background: rgba(255,255,255,0.1);
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
-        /* Gameplay Area */
-        .status-box {
-            background-color: rgba(0,0,0,0.4);
-            padding: 20px;
-            border-radius: 16px;
-            margin: 20px 0;
-            border: 1px solid var(--glass-border);
+        .num-btn {
+            background: rgba(30, 41, 59, 0.9); border: 1px solid #475569;
+            color: white; font-size: 20px; font-weight: 800; padding: 15px 0;
+            border-radius: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin: 0;
+        }
+        .num-btn:hover:not(:disabled) {
+            background: var(--blue); border-color: white; color: white;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
         }
 
-        .number-display {
-            font-size: 60px;
-            font-weight: 800;
-            color: var(--gold);
-            margin: 15px 0;
-            text-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        .indicator {
+            text-align: center; padding: 15px; border-radius: 15px; margin-bottom: 25px; font-weight: 800; font-size: 15px;
+            background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2); letter-spacing: 1px;
+        }
+        
+        .score-box { 
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; 
+            font-weight: bold; color: var(--gold); background: rgba(0,0,0,0.3); 
+            padding: 15px 25px; border-radius: 16px; border: 1px solid var(--glass-border);
+        }
+        .player-name { display: block; font-size: 13px; color: #cbd5e1; text-transform: uppercase; margin-bottom: 5px; }
+        .score-num { font-size: 28px; color: white; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+        
+        .fullscreen-overlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            z-index: 1000; display: none; flex-direction: column; align-items: center; 
+            justify-content: center; text-align: center; padding: 20px;
         }
 
-        .player-turn {
-            font-size: 1.2rem;
-            font-weight: 800;
-            margin-bottom: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            transition: 0.3s;
-        }
-
-        .btn-action {
-            width: 30%;
-            height: 60px;
-            font-size: 24px;
-            background-color: #10b981;
-            color: white;
-            margin: 0 1%;
-            border-radius: 12px;
-        }
-
-        .btn-action:hover {
-            background-color: #059669;
-        }
-
-        .btn-action:disabled {
-            background-color: #475569;
-            color: #94a3b8;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Ẩn các khu vực chưa cần thiết */
-        #gameplay-area, #result-area {
-            display: none;
-        }
-
-        @media (max-width: 500px) {
-            .game-wrapper { padding: 25px 20px; }
-            h1 { font-size: 1.8rem; }
-            .btn-action { font-size: 20px; }
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 480px) {
+            .glass { padding: 25px 15px; }
+            h1 { font-size: 1.6rem; }
+            .score-num { font-size: 22px; }
+            .score-box { padding: 15px; }
+            .total-number { font-size: 65px; }
+            .numpad { gap: 8px; }
+            .num-btn { padding: 12px 0; font-size: 18px; }
         }
     </style>
 </head>
 <body>
+    <a href="index.html" class="back-home">⬅ TRANG CHỦ</a>
 
-    <div class="game-wrapper">
-        <h1>ĐẾM SỐ CHIẾN LƯỢC <span class="badge-test">(Thử nghiệm)</span></h1>
+    <div id="ready-overlay" class="fullscreen-overlay">
+        <h2 style="color: var(--gold); font-size: 2rem; margin-bottom: 10px; text-shadow: 0 0 15px rgba(245,158,11,0.5);">ĐANG CHỜ ĐỐI THỦ...</h2>
+        <p id="ready-status" style="color: var(--green); font-size: 1.5rem; font-weight: bold; text-shadow: 0 0 15px rgba(16,185,129,0.5);">Sẵn sàng: 1/2</p>
+    </div>
+
+    <div id="randomizing-overlay" class="fullscreen-overlay">
+        <div style="font-size: 60px; margin-bottom: 20px; animation: floating 2s infinite ease-in-out;">🪙</div>
+        <h2 id="random-msg" style="color: var(--gold); font-size: 2rem; margin-bottom: 10px; text-shadow: 0 0 15px rgba(245,158,11,0.5);">Đang tung đồng xu...</h2>
+        <p id="random-sub" style="color: #cbd5e1; font-size: 1.2rem;">Ai sẽ đi trước đây?</p>
+    </div>
+
+    <!-- LOBBY CHỜ KẾT NỐI -->
+    <div id="lobby" class="glass">
+        <h1>ĐẾM SỐ<br>CHIẾN LƯỢC</h1>
+        <p style="text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 25px; line-height: 1.6;">Lần lượt cộng thêm từ +1 đến +10.<br>Ai đạt đến <b>MỐC 100</b> trước người đó sẽ giành chiến thắng!</p>
         
-        <div id="setup-area">
-            <div class="rule">
-                ⚔️ <b>CÁCH CHƠI:</b><br>Mỗi lượt chọn đếm thêm +1, +2 hoặc +3.<br>Ai đếm tới đích trước sẽ là người chiến thắng!
-            </div>
+        <input type="text" id="my-name-input" placeholder="Nhập tên của bạn (Bắt buộc)" maxlength="15">
 
-            <div class="input-group">
-                <label>Tên Người chơi 1:</label>
-                <input type="text" id="p1Name" placeholder="Nhập tên của bạn..." autocomplete="off">
-            </div>
-
-            <div class="input-group">
-                <label>Tên Người chơi 2:</label>
-                <input type="text" id="p2Name" placeholder="Nhập tên đối thủ..." autocomplete="off">
-            </div>
-
-            <div class="input-group">
-                <label>Số mục tiêu (Đích đến):</label>
-                <input type="number" id="targetInput" value="30" min="5">
-            </div>
-
-            <button onclick="startGame()">Bắt Đầu Chơi</button>
-            <br>
-            <a href="index.html" class="btn-back">⬅ Quay lại Sảnh</a>
+        <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.1);">
+            <small style="color: #94a3b8; font-weight: 600; text-transform: uppercase;">Mã Phòng Của Bạn:</small>
+            <div id="my-id" style="font-size: 24px; font-weight: 800; color: var(--red); letter-spacing: 2px; margin-top: 5px; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">...</div>
+            <small style="color: var(--gold); font-size: 12px; display: block; margin-top: 8px;">Gửi mã này cho bạn bè để họ Tham Gia</small>
         </div>
+        
+        <input type="text" id="peer-id-input" placeholder="Nhập mã phòng của bạn bè để tham gia">
+        <button onclick="connectToPeer()">THAM GIA PHÒNG</button>
+        
+        <div style="margin: 25px 0; border-top: 1px solid var(--glass-border); position: relative;">
+            <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--dark); padding: 0 15px; color: #94a3b8; font-size: 13px; font-weight: bold;">HOẶC</span>
+        </div>
+        
+        <button class="btn-bot" onclick="startBotMode()">🤖 CHƠI VỚI MÁY (BOT THÔNG MINH)</button>
 
-        <div id="gameplay-area">
-            <div class="status-box">
-                <div style="color: #cbd5e1;">Mục tiêu cần đạt: <b id="targetDisplay" style="color: white; font-size: 1.2rem;">30</b></div>
-                <div class="number-display" id="currentNumberDisplay">0</div>
-                <div style="color: #cbd5e1;">Khoảng cách đến đích: <b id="remainingDisplay" style="color: white;">30</b></div>
+        <p id="status" style="text-align:center; font-size: 13px; color: var(--green); margin-top: 20px; font-weight: 600;">Đang khởi tạo máy chủ...</p>
+    </div>
+
+    <!-- GIAO DIỆN GAME CHÍNH -->
+    <div id="game-view" class="glass" style="display:none;">
+        <div class="score-box">
+            <div style="text-align: left;">
+                <span class="player-name" id="name-you">BẠN</span>
+                <span class="score-num" id="s-you">0</span>
             </div>
-
-            <div class="player-turn" id="playerTurnDisplay">Đến lượt: P1</div>
-            
-            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
-                <button class="btn-action" id="btn1" onclick="countNumber(1)">+1</button>
-                <button class="btn-action" id="btn2" onclick="countNumber(2)">+2</button>
-                <button class="btn-action" id="btn3" onclick="countNumber(3)">+3</button>
+            <div style="font-size: 24px; color: #475569; font-weight: 800;">-</div>
+            <div style="text-align: right;">
+                <span class="player-name" id="name-opp">ĐỐI THỦ</span>
+                <span class="score-num" id="s-opp">0</span>
             </div>
         </div>
-
-        <div id="result-area">
-            <h1 style="font-size: 3rem; margin-bottom: 0;">🏆</h1>
-            <h2 id="winnerText" style="color: var(--gold); margin-top: 10px;">🎉 Người chơi chiến thắng! 🎉</h2>
-            <p style="color: #94a3b8; margin-bottom: 30px;">Trận đấu kết thúc ở mốc số <b id="finalTargetText">30</b>.</p>
-            <button onclick="resetGame()">Chơi Ván Mới</button>
-            <br>
-            <a href="index.html" class="btn-back">⬅ Về Sảnh</a>
+        
+        <div id="turn-txt" class="indicator">ĐANG CHỜ...</div>
+        
+        <div class="total-display-wrapper">
+            <div class="total-number" id="current-total">0</div>
+            <div class="target-text">MỤC TIÊU: 100</div>
         </div>
+        
+        <!-- Bàn phím số để chọn -->
+        <div class="numpad" id="numpad">
+            <button class="num-btn" onclick="makeMove(1)">+1</button>
+            <button class="num-btn" onclick="makeMove(2)">+2</button>
+            <button class="num-btn" onclick="makeMove(3)">+3</button>
+            <button class="num-btn" onclick="makeMove(4)">+4</button>
+            <button class="num-btn" onclick="makeMove(5)">+5</button>
+            <button class="num-btn" onclick="makeMove(6)">+6</button>
+            <button class="num-btn" onclick="makeMove(7)">+7</button>
+            <button class="num-btn" onclick="makeMove(8)">+8</button>
+            <button class="num-btn" onclick="makeMove(9)">+9</button>
+            <button class="num-btn" onclick="makeMove(10)">+10</button>
+        </div>
+        
+        <button id="btn-restart" onclick="requestRestart()" style="display:none; background: var(--gold); color:black;">VÁN MỚI (SẴN SÀNG)</button>
     </div>
 
     <script>
-        // Các biến lưu trữ trạng thái trò chơi
-        let targetNumber = 30;
-        let currentNumber = 0;
-        let currentPlayer = 1; // 1 hoặc 2
-        let p1Name = "";
-        let p2Name = "";
+        const peer = new Peer({
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        });
+        
+        let conn, myId;
+        let isHost = false; 
+        let isMyTurn = false;
+        let isBotMode = false;
+        
+        let localReady = false;
+        let remoteReady = false;
 
-        // Hàm bắt đầu game
-        function startGame() {
-            p1Name = document.getElementById("p1Name").value.trim();
-            p2Name = document.getElementById("p2Name").value.trim();
-            let inputVal = parseInt(document.getElementById("targetInput").value);
-            
-            // Kiểm tra điều kiện bắt buộc
-            if (p1Name === "" || p2Name === "") {
-                alert("⚠ Vui lòng nhập đầy đủ tên cho cả 2 người chơi!");
+        let myName = "";
+        let oppName = "Đối Thủ";
+
+        // Logic game đếm số
+        const TARGET = 100;
+        let currentTotal = 0; 
+        let scores = {you: 0, opp: 0};
+
+        peer.on('open', id => { 
+            myId = id; 
+            document.getElementById('my-id').innerText = id; 
+            document.getElementById('status').innerText = "Máy chủ đã sẵn sàng!"; 
+        });
+        
+        peer.on('connection', c => { 
+            const inputName = document.getElementById('my-name-input').value.trim();
+            if (!inputName) {
+                alert("Ai đó đang cố kết nối nhưng bạn chưa nhập tên! Hãy nhập tên để có thể chơi.");
                 return;
             }
+            
+            isHost = true; 
+            conn = c; 
+            isBotMode = false;
+            saveMyName();
+            setupConn(); 
+            
+            const startSequence = () => {
+                const randomStarter = Math.random() < 0.5;
+                conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName, isRandom: true});
+                startTurnSequence(randomStarter, oppName, true); 
+            };
 
-            if (isNaN(inputVal) || inputVal < 5) {
-                alert("⚠ Vui lòng nhập số mục tiêu hợp lệ (nhỏ nhất là 5)!");
-                return;
-            }
+            if (conn.open) { setTimeout(startSequence, 500); } 
+            else { conn.on('open', () => { setTimeout(startSequence, 500); }); }
+        });
 
-            targetNumber = inputVal;
-            currentNumber = 0;
-            currentPlayer = 1;
-
-            // Cập nhật giao diện
-            document.getElementById("targetDisplay").innerText = targetNumber;
-            document.getElementById("finalTargetText").innerText = targetNumber;
-
-            updateUI();
-
-            // Chuyển đổi màn hình
-            document.getElementById("setup-area").style.display = "none";
-            document.getElementById("gameplay-area").style.display = "block";
-            document.getElementById("result-area").style.display = "none";
+        function connectToPeer() {
+            const inputName = document.getElementById('my-name-input').value.trim();
+            const id = document.getElementById('peer-id-input').value.trim();
+            
+            if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi bắt đầu!");
+            if (!id) return alert("Vui lòng nhập mã phòng của bạn bè!");
+            
+            isHost = false;
+            saveMyName();
+            conn = peer.connect(id, { reliable: true });
+            isBotMode = false;
+            setupConn();
+            document.getElementById('status').innerText = "Đang kết nối vào phòng...";
         }
 
-        function countNumber(step) {
-            if (currentNumber + step > targetNumber) return;
+        function saveMyName() {
+            myName = document.getElementById('my-name-input').value.trim();
+        }
 
-            currentNumber += step;
+        function setupConn() {
+            const sendUserInfo = () => { conn.send({type: 'USER_INFO', name: myName}); };
+            if (conn.open) { sendUserInfo(); } else { conn.on('open', sendUserInfo); }
+
+            conn.on('data', data => {
+                if(data.type === 'USER_INFO') {
+                    oppName = data.name;
+                    document.getElementById('name-opp').innerText = oppName;
+                }
+                if(data.type === 'START_INFO') { 
+                    oppName = data.hostName; 
+                    document.getElementById('name-opp').innerText = oppName;
+                    
+                    localReady = false; remoteReady = false;
+                    document.getElementById('ready-overlay').style.display = 'none';
+                    resetGameUI();
+
+                    startTurnSequence(data.youStart, oppName, data.isRandom); 
+                }
+                if(data.type === 'MOVE') { 
+                    currentTotal = data.total; 
+                    isMyTurn = true; 
+                    updateBoard(); 
+                    checkWin("OPP"); 
+                }
+                if(data.type === 'READY_UP') {
+                    remoteReady = true;
+                    checkBothReady();
+                }
+            });
             
-            if (currentNumber === targetNumber) {
-                updateUI();
-                endGame();
+            conn.on('close', () => {
+                alert("Đối thủ đã ngắt kết nối!");
+                window.location.reload();
+            });
+        }
+
+        function startBotMode() {
+            const inputName = document.getElementById('my-name-input').value.trim();
+            if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi chơi với máy!");
+            
+            saveMyName();
+            isBotMode = true;
+            oppName = "Bot Thông Minh 🤖";
+            document.getElementById('name-opp').innerText = oppName;
+            
+            const randomStarter = Math.random() < 0.5;
+            startTurnSequence(randomStarter, oppName, true); 
+        }
+
+        // --- BOT LOGIC (ĐẾM SỐ CHIẾN LƯỢC) ---
+        function executeBotTurn() {
+            updateTurnText(false, true); 
+            setTimeout(() => {
+                let move = getBestBotMove(currentTotal);
+                
+                // An toàn: Đảm bảo Bot không vô tình cộng quá 100
+                if (currentTotal + move > TARGET) {
+                    move = TARGET - currentTotal;
+                }
+                
+                currentTotal += move;
+                isMyTurn = true;
+                updateBoard();
+                checkWin("OPP");
+            }, 1000 + Math.random() * 1000); 
+        }
+
+        function getBestBotMove(current) {
+            // Chiến thuật thắng: Đưa tổng về các bội số của 11 + 1 (vd: 12, 23, 34,... 89, 100)
+            // Tức là mục tiêu để lại cho người kia là (100 - X) chia hết cho 11.
+            let remainder = (TARGET - current) % 11;
+            
+            if (remainder === 0) {
+                // Đang nằm ở vị trí thua (ví dụ: đang là 89, cần 11 bước nữa mới tới 100)
+                // Bot chọn ngẫu nhiên từ 1 đến 10
+                let randomMove = Math.floor(Math.random() * 10) + 1;
+                // Nếu khoảng cách tới 100 nhỏ hơn 10 thì chỉ bốc ngẫu nhiên số nhỏ hơn
+                if (current + randomMove > TARGET) {
+                    return TARGET - current;
+                }
+                return randomMove;
             } else {
-                currentPlayer = currentPlayer === 1 ? 2 : 1;
-                updateUI();
+                // Đi đúng số bước để dồn đối thủ vào thế bí
+                return remainder;
             }
         }
 
-        function updateUI() {
-            document.getElementById("currentNumberDisplay").innerText = currentNumber;
-            document.getElementById("remainingDisplay").innerText = targetNumber - currentNumber;
+        // --- GIAO DIỆN & RANDOM LƯỢT ---
+        function startTurnSequence(iStart, opponentName, isRandom) {
+            const overlay = document.getElementById('randomizing-overlay');
+            overlay.style.display = 'flex';
+            document.getElementById('name-you').innerText = myName;
+            document.getElementById('random-msg').style.color = "var(--gold)"; 
 
-            // Xử lý hiển thị tên và màu sắc theo lượt
-            let turnText = document.getElementById("playerTurnDisplay");
-            let activeName = currentPlayer === 1 ? p1Name : p2Name;
+            document.getElementById('random-msg').innerText = "Đang tung đồng xu...";
+            document.getElementById('random-sub').innerText = "Ai sẽ đi trước đây?";
             
-            turnText.innerText = `▶ Lượt của: ${activeName.toUpperCase()} ◀`;
+            setTimeout(() => {
+                document.getElementById('random-msg').innerText = iStart ? `${myName.toUpperCase()} ĐI TRƯỚC!` : `${opponentName.toUpperCase()} ĐI TRƯỚC!`;
+                document.getElementById('random-msg').style.color = iStart ? "var(--green)" : "var(--red)";
+                document.getElementById('random-sub').innerText = "";
+                
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    isMyTurn = iStart;
+                    startUI();
+                    
+                    if (isBotMode && !isMyTurn) executeBotTurn();
+                }, 1500);
+            }, 1500);
+        }
+
+        function startUI() {
+            document.getElementById('lobby').style.display = 'none';
+            document.getElementById('game-view').style.display = 'block';
+            resetGameUI();
+        }
+
+        // --- XỬ LÝ NƯỚC ĐI VÀ GIAO DIỆN BÀN PHÍM ---
+        function updateBoard() {
+            // Cập nhật số hiển thị
+            const totalDisplay = document.getElementById('current-total');
+            totalDisplay.innerText = currentTotal;
             
-            if (currentPlayer === 1) {
-                turnText.style.backgroundColor = "rgba(59, 130, 246, 0.2)"; // Nền xanh dương
-                turnText.style.color = "var(--p1-color)";
-                turnText.style.border = "1px solid var(--p1-color)";
+            // Cập nhật text trạng thái
+            updateTurnText(isMyTurn, false);
+            
+            // Bật/tắt bàn phím số
+            toggleNumpad(isMyTurn);
+        }
+
+        function toggleNumpad(enable) {
+            const buttons = document.querySelectorAll('#numpad button');
+            buttons.forEach((btn, index) => {
+                const val = index + 1; // Giá trị từ 1 đến 10
+                // Bật nút nếu đến lượt VÀ số đó không làm Tổng vượt qua 100
+                if (enable && (currentTotal + val <= TARGET)) {
+                    btn.disabled = false;
+                } else {
+                    btn.disabled = true;
+                }
+            });
+        }
+
+        function makeMove(num) {
+            if (!isMyTurn || currentTotal + num > TARGET) return;
+            
+            currentTotal += num;
+            isMyTurn = false; 
+            
+            if (!isBotMode) conn.send({type: 'MOVE', total: currentTotal});
+            updateBoard();
+            
+            if (!checkWin("YOU") && isBotMode) {
+                executeBotTurn();
+            }
+        }
+
+        function updateTurnText(isMe, isBotThinking = false) {
+            const t = document.getElementById('turn-txt');
+            if (isMe) {
+                t.innerText = "🟢 LƯỢT CỦA BẠN CHỌN SỐ";
+                t.style.color = "var(--green)";
             } else {
-                turnText.style.backgroundColor = "rgba(239, 68, 68, 0.2)"; // Nền đỏ
-                turnText.style.color = "var(--p2-color)";
-                turnText.style.border = "1px solid var(--p2-color)";
+                t.innerText = isBotThinking ? "🤖 BOT ĐANG TÍNH TOÁN..." : "⏳ ĐỐI THỦ ĐANG NGHĨ...";
+                t.style.color = "#94a3b8";
             }
-
-            // Vô hiệu hóa nút nếu cộng vào sẽ vượt quá mục tiêu
-            let remaining = targetNumber - currentNumber;
-            document.getElementById("btn1").disabled = remaining < 1;
-            document.getElementById("btn2").disabled = remaining < 2;
-            document.getElementById("btn3").disabled = remaining < 3;
         }
 
-        function endGame() {
-            let winnerName = currentPlayer === 1 ? p1Name : p2Name;
-            document.getElementById("gameplay-area").style.display = "none";
-            document.getElementById("result-area").style.display = "block";
-            document.getElementById("winnerText").innerText = `🎉 ${winnerName.toUpperCase()} CHIẾN THẮNG! 🎉`;
+        function checkWin(last) {
+            if(currentTotal >= TARGET) {
+                const winName = (last === "YOU" ? myName : oppName);
+                const isYouWin = (winName === myName);
+                
+                if(isYouWin) scores.you++; else scores.opp++;
+                document.getElementById('s-you').innerText = scores.you;
+                document.getElementById('s-opp').innerText = scores.opp;
+                
+                document.getElementById('turn-txt').innerText = `🎉 ${winName.toUpperCase()} ĐÃ CHIẾN THẮNG!`;
+                document.getElementById('turn-txt').style.color = isYouWin ? "var(--green)" : "var(--red)";
+                
+                // Đổi màu số tổng lên Vàng hoặc Đỏ
+                document.getElementById('current-total').style.color = isYouWin ? "var(--green)" : "var(--red)";
+                document.getElementById('current-total').style.textShadow = isYouWin ? "0 0 25px rgba(16,185,129,0.5)" : "0 0 25px rgba(239,68,68,0.5)";
+
+                toggleNumpad(false);
+                document.getElementById('btn-restart').style.display = 'block';
+                return true;
+            }
+            return false;
         }
 
-        function resetGame() {
-            document.getElementById("setup-area").style.display = "block";
-            document.getElementById("result-area").style.display = "none";
+        function requestRestart() { 
+            if (isBotMode) {
+                const overlay = document.getElementById('ready-overlay');
+                const statusText = document.getElementById('ready-status');
+                overlay.style.display = 'flex';
+                statusText.innerText = "Sẵn sàng: 2/2\nBắt đầu!";
+                statusText.style.color = "var(--green)";
+                
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    resetGameUI();
+                    
+                    const randomStarter = Math.random() < 0.5;
+                    startTurnSequence(randomStarter, oppName, true);
+                }, 1000);
+            } else {
+                localReady = true;
+                document.getElementById('btn-restart').style.display = 'none'; 
+                conn.send({type: 'READY_UP'}); 
+                checkBothReady();
+            }
+        }
+
+        function checkBothReady() {
+            const overlay = document.getElementById('ready-overlay');
+            const statusText = document.getElementById('ready-status');
+
+            if (localReady && !remoteReady) {
+                overlay.style.display = 'flex';
+                statusText.innerText = `Sẵn sàng: 1/2\n(Đang chờ ${oppName}...)`;
+                statusText.style.color = "var(--gold)";
+            } 
+            else if (!localReady && remoteReady) {
+                document.getElementById('turn-txt').innerText = `${oppName.toUpperCase()} MUỐN CHƠI LẠI (1/2)`;
+                document.getElementById('turn-txt').style.color = "var(--gold)";
+            } 
+            else if (localReady && remoteReady) {
+                overlay.style.display = 'flex';
+                statusText.innerText = "Sẵn sàng: 2/2\nBắt đầu!";
+                statusText.style.color = "var(--green)";
+
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    localReady = false;
+                    remoteReady = false;
+                    resetGameUI();
+
+                    if (isHost) {
+                        const randomStarter = Math.random() < 0.5;
+                        conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName, isRandom: true});
+                        startTurnSequence(randomStarter, oppName, true);
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetGameUI() {
+            currentTotal = 0; 
+            const totalElement = document.getElementById('current-total');
+            totalElement.innerText = currentTotal;
+            totalElement.style.color = "white"; // Khôi phục màu sắc ban đầu
+            totalElement.style.textShadow = "0 0 25px rgba(245, 158, 11, 0.6)";
+
+            document.getElementById('btn-restart').style.display = 'none';
+            document.getElementById('numpad').style.display = 'grid';
+            
+            updateBoard();
         }
     </script>
-
 </body>
 </html>
