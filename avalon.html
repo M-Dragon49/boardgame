@@ -6,118 +6,299 @@
     <title>Ma Lon Ôn Lai</title>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-database-compat.js"></script>
+
+    <link rel="icon" type="image/jpeg" href="luckyrex.png">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
 
         :root {
-            --blue: #3b82f6; --red: #ef4444; --gold: #f59e0b; --green: #10b981; --dark: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.8); --glass-border: rgba(255, 255, 255, 0.15);
+            --blue: #3b82f6; 
+            --red: #ef4444; 
+            --gold: #f59e0b; 
+            --gold-light: #fbbf24;
+            --green: #10b981; 
+            --dark: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.5); 
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Montserrat', sans-serif; background: var(--dark);
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: #f8fafc; margin: 0; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; padding: 20px 10px;
-            box-sizing: border-box; overflow-x: hidden;
+            font-family: 'Montserrat', sans-serif; 
+            background-color: var(--dark);
+            color: #f8fafc; 
+            margin: 0; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 40px 10px 20px 10px;
+            overflow-x: hidden;
+            position: relative;
         }
 
-        .container { width: 100%; max-width: 550px; }
+        /* --- BACKGROUND EFFECTS --- */
+        body::before, body::after {
+            content: '';
+            position: fixed; /* Fixed để nền không bị trôi khi cuộn */
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0) 70%);
+            z-index: -1;
+            animation: floating 10s infinite ease-in-out alternate;
+        }
+        body::after {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(15, 23, 42, 0) 70%);
+            top: auto;
+            bottom: -10%;
+            left: -10%;
+            animation-delay: -5s;
+        }
+        @keyframes floating {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(10%, 15%); }
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 550px; 
+            z-index: 1;
+            position: relative;
+        }
 
         .glass {
-            background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border); border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37); padding: 25px; width: 100%;
-            margin-bottom: 20px; box-sizing: border-box;
+            background: var(--glass-bg); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); 
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3); 
+            padding: 30px; 
+            width: 100%;
+            margin-bottom: 20px; 
+            /* Animation xuất hiện */
+            animation: fadeInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
-        h1, h2, h3 { text-align: center; margin-top: 0; color: var(--gold); text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-        .red-text { color: var(--red); font-weight: 800; }
-        .blue-text { color: var(--blue); font-weight: 800; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { 
+            text-align: center; 
+            margin-top: 0; 
+            font-size: 2.2rem;
+            background: linear-gradient(to right, var(--gold-light), var(--gold), #ea580c);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.3));
+        }
+
+        h2, h3 { 
+            text-align: center; 
+            margin-top: 0; 
+            color: var(--gold); 
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+            letter-spacing: 1px;
+        }
+
+        .red-text { color: var(--red); font-weight: 800; text-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+        .blue-text { color: var(--blue); font-weight: 800; text-shadow: 0 0 10px rgba(59, 130, 246, 0.4); }
         .hidden { display: none !important; }
 
+        /* --- INPUTS --- */
         input {
-            width: 100%; padding: 15px; margin-bottom: 15px; border-radius: 12px; border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.4); color: white; font-size: 16px; box-sizing: border-box;
+            width: 100%; 
+            padding: 16px 25px; 
+            margin-bottom: 15px; 
+            border-radius: 50px; 
+            border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.3); 
+            color: white; 
+            font-size: 16px; 
+            font-family: inherit;
+            transition: all 0.3s ease;
         }
-        input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 10px rgba(245, 158, 11, 0.3); }
+        input:focus { 
+            outline: none; 
+            border-color: var(--gold); 
+            background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); 
+        }
 
+        /* --- BUTTONS --- */
         button {
-            width: 100%; padding: 15px; border-radius: 12px; border: none; font-size: 15px; font-weight: bold;
-            cursor: pointer; background: var(--blue); color: white; transition: all 0.2s;
-            margin-bottom: 10px; text-transform: uppercase;
+            width: 100%; 
+            padding: 16px 30px; 
+            border-radius: 50px; 
+            border: 2px solid transparent; 
+            font-size: 15px; 
+            font-weight: 800;
+            cursor: pointer; 
+            background: var(--blue); 
+            color: white; 
+            transition: all 0.3s ease;
+            margin-bottom: 12px; 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
         }
-        button:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.15); }
-        button:disabled { cursor: not-allowed; opacity: 0.7; }
+        button:hover:not(:disabled) { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.1);
+        }
+        button:disabled { 
+            cursor: not-allowed; 
+            opacity: 0.5; 
+            transform: none !important;
+            box-shadow: none !important;
+        }
         
-        .btn-gold { background: var(--gold); color: #000; }
-        .btn-red { background: var(--red); color: white; }
-        .btn-green { background: var(--green); color: white; }
-        .btn-gray { background: transparent; border: 1px solid #64748b; color: #cbd5e1; }
+        .btn-blue { background: var(--blue); }
+        .btn-gold { 
+            background: var(--gold); 
+            color: #000; 
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2);
+        }
+        .btn-gold:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); }
+        
+        .btn-red { 
+            background: var(--red); 
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.2);
+        }
+        .btn-red:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4); }
+        
+        .btn-green { 
+            background: var(--green); 
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.2);
+        }
+        .btn-green:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4); }
+        
+        .btn-gray { 
+            background: transparent; 
+            border-color: #64748b; 
+            color: #cbd5e1; 
+            box-shadow: none;
+        }
+        .btn-gray:hover:not(:disabled) { 
+            background: rgba(100, 116, 139, 0.15); 
+            color: white;
+            border-color: white;
+            box-shadow: 0 5px 15px rgba(255, 255, 255, 0.1);
+        }
 
+        /* --- LOBBY --- */
         .lobby-player {
-            display: flex; justify-content: space-between; padding: 12px; background: rgba(255,255,255,0.05);
-            border-radius: 10px; margin-bottom: 8px; align-items: center; font-weight: 600; border: 1px solid #333;
+            display: flex; justify-content: space-between; padding: 15px 20px; 
+            background: rgba(0,0,0,0.25); border-radius: 15px; margin-bottom: 10px; 
+            align-items: center; font-weight: 600; border: 1px solid var(--glass-border);
+            transition: transform 0.2s;
         }
+        .lobby-player:hover { background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.2); }
 
-        .quest-board { display: flex; justify-content: space-around; background: rgba(0,0,0,0.4); padding: 15px 10px; border-radius: 15px; flex-wrap: wrap; }
+        /* --- QUEST BOARD --- */
+        .quest-board { 
+            display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); 
+            padding: 20px 10px; border-radius: 20px; flex-wrap: wrap; 
+            border: 1px solid var(--glass-border);
+        }
         .quest-slot {
-            width: 48px; height: 48px; border-radius: 50%; border: 2px solid #555; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; font-weight: bold; background: #1e293b; position: relative; margin-bottom: 15px;
+            width: 55px; height: 55px; border-radius: 50%; border: 2px solid #475569; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            font-weight: bold; background: #1e293b; position: relative; margin-bottom: 20px;
+            transition: all 0.3s ease;
         }
-        .quest-slot span { font-size: 18px; }
-        .quest-slot small { font-size: 10px; position: absolute; bottom: -20px; color: #94a3b8; white-space: nowrap; }
-        .quest-slot.win { background: var(--blue); border-color: #fff; box-shadow: 0 0 15px var(--blue); }
-        .quest-slot.fail { background: var(--red); border-color: #fff; box-shadow: 0 0 15px var(--red); }
-        .quest-slot.current { border-color: var(--gold); box-shadow: 0 0 15px var(--gold); transform: scale(1.1); }
+        .quest-slot span { font-size: 20px; }
+        .quest-slot small { font-size: 11px; position: absolute; bottom: -22px; color: #94a3b8; white-space: nowrap; font-weight: 600;}
+        .quest-slot.win { background: var(--blue); border-color: #fff; box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
+        .quest-slot.fail { background: var(--red); border-color: #fff; box-shadow: 0 0 20px rgba(239, 68, 68, 0.6); }
+        .quest-slot.current { border-color: var(--gold); box-shadow: 0 0 20px rgba(245, 158, 11, 0.6); transform: scale(1.15); }
 
-        .quest-rules { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; text-align: center; font-size: 14px; margin: 15px 0 10px 0; border-left: 4px solid var(--gold); }
+        .quest-rules { 
+            background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; 
+            text-align: center; font-size: 14px; margin: 20px 0 10px 0; 
+            border-left: 4px solid var(--gold); line-height: 1.6;
+        }
 
-        .circle-container { position: relative; width: 100%; max-width: 320px; aspect-ratio: 1 / 1; margin: 30px auto 50px auto; border-radius: 50%; }
+        /* --- CIRCLE CONTAINER --- */
+        .circle-container { 
+            position: relative; width: 100%; max-width: 320px; aspect-ratio: 1 / 1; 
+            margin: 40px auto 60px auto; border-radius: 50%; 
+        }
         
         .player-node {
-            position: absolute; width: 60px; height: 60px; transform: translate(-50%, -50%); 
-            background: #1e293b; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 11px; border: 2px solid #475569; transition: all 0.3s ease; text-align: center; font-weight: 600; cursor: pointer; z-index: 2;
+            position: absolute; width: 65px; height: 65px; transform: translate(-50%, -50%); 
+            background: rgba(30, 41, 59, 0.9); backdrop-filter: blur(5px);
+            border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 11px; border: 2px solid #475569; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            text-align: center; font-weight: 600; cursor: pointer; z-index: 2;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
-        
         .player-node span { width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: inline-block; }
-        .player-node.me { border-color: #fff; z-index: 5; box-shadow: 0 0 15px rgba(255,255,255,0.4); }
+        .player-node:hover { transform: translate(-50%, -50%) scale(1.1); border-color: #94a3b8; }
+        .player-node.me { border-color: #fff; z-index: 5; box-shadow: 0 0 20px rgba(255,255,255,0.3); background: rgba(51, 65, 85, 0.9); }
         .player-node.bot { border-style: dashed; }
-        .player-node.selected { background: var(--blue); border-color: #fff; transform: translate(-50%, -50%) scale(1.15); box-shadow: 0 0 20px var(--blue); z-index: 6; }
+        .player-node.selected { 
+            background: var(--blue); border-color: #fff; 
+            transform: translate(-50%, -50%) scale(1.2); 
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); z-index: 6; 
+        }
         .player-node.offline { opacity: 0.5; border-color: var(--red); border-style: dashed; }
-        .player-node.offline::after { content: '🔌'; position: absolute; font-size: 20px; z-index: 20; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        .player-node.offline::after { content: '🔌'; position: absolute; font-size: 20px; z-index: 20; top: 50%; left: 50%; transform: translate(-50%, -50%); filter: drop-shadow(0 0 5px #000); }
 
-        .badge-icon { position: absolute; font-size: 22px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); z-index: 10; }
-        .king-icon { top: -15px; }
-        .lady-icon { bottom: -15px; }
+        .badge-icon { position: absolute; font-size: 24px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.9)); z-index: 10; }
+        .king-icon { top: -18px; }
+        .lady-icon { bottom: -18px; }
 
         .vote-badge {
-            position: absolute; top: -5px; right: -5px; width: 22px; height: 22px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; z-index: 10; border: 2px solid white;
+            position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; 
+            z-index: 10; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
         .vote-yes { background: var(--green); }
         .vote-no { background: var(--red); }
 
-        .role-box { border: 2px solid var(--gold); background: rgba(0,0,0,0.6); padding: 15px; border-radius: 12px; margin-bottom: 15px; text-align: center; font-size: 15px; line-height: 1.6; }
+        /* --- ROLES & SELECTABLES --- */
+        .role-box { 
+            border: 2px solid var(--gold); background: rgba(0,0,0,0.5); padding: 20px; 
+            border-radius: 15px; margin-bottom: 15px; text-align: center; font-size: 15px; line-height: 1.6; 
+            box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.1);
+        }
 
         .selectable-name {
-            padding: 10px 15px; background: rgba(0,0,0,0.4); border-radius: 8px; margin: 5px;
-            cursor: pointer; font-weight: bold; border: 2px solid #555; transition: 0.2s; color: white; flex: 1 1 calc(50% - 10px); text-align: center;
+            padding: 12px 20px; background: rgba(0,0,0,0.4); border-radius: 50px; margin: 6px;
+            cursor: pointer; font-weight: bold; border: 1px solid #555; transition: all 0.2s ease; 
+            color: white; flex: 1 1 calc(50% - 12px); text-align: center; font-size: 14px;
         }
-        .selectable-name.selected { background: var(--blue); border-color: white; }
-        .selectable-name.selected-red { background: var(--red); border-color: white; }
-        .selectable-name.disabled { opacity: 0.4; pointer-events: none; border-color: var(--red); text-decoration: line-through; }
+        .selectable-name:hover:not(.disabled) { background: rgba(255,255,255,0.1); border-color: #94a3b8; transform: translateY(-2px); }
+        .selectable-name.selected { background: var(--blue); border-color: white; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
+        .selectable-name.selected-red { background: var(--red); border-color: white; box-shadow: 0 0 15px rgba(239, 68, 68, 0.5); }
+        .selectable-name.disabled { opacity: 0.3; pointer-events: none; border-color: var(--red); text-decoration: line-through; }
 
-        /* NÚT QUAY LẠI TRANG CHỦ */
+        /* --- NÚT QUAY LẠI TRANG CHỦ --- */
         .back-home {
             position: fixed; top: 20px; left: 20px; z-index: 1000;
             background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 12px;
-            color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600;
+            border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 50px;
+            color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 700;
             transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .back-home:hover { color: white; border-color: var(--gold); transform: translateX(5px); }
+        .back-home:hover { 
+            color: white; border-color: var(--gold); 
+            transform: translateX(5px); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+            background: rgba(30, 41, 59, 0.8);
+        }
     </style>
 </head>
 <body>
@@ -127,7 +308,7 @@
 <div class="container">
     <div id="view-login" class="glass">
         <h1>MA LON ÔN LAI</h1>
-        <p style="text-align: center; color:#94a3b8; font-size: 14px;">AI Bot Thông Minh - Bản vá độ trễ mạng</p>
+        <p style="text-align: center; color:#94a3b8; font-size: 14px; margin-bottom: 25px;">AI Bot Thông Minh - Bản vá độ trễ mạng</p>
         <input type="text" id="in-room" placeholder="Mã phòng (vd: VIP1, ROOM2...)">
         <input type="text" id="in-name" placeholder="Tên của bạn">
         <button onclick="handleEntry('join')">VÀO PHÒNG</button>
@@ -136,32 +317,32 @@
 
     <div id="view-lobby" class="hidden glass">
         <h2 id="room-title">Phòng: </h2>
-        <p id="host-msg" style="color: var(--gold); font-size: 14px; font-weight: bold; text-align: center;"></p>
+        <p id="host-msg" style="color: var(--gold); font-size: 14px; font-weight: bold; text-align: center; text-shadow: 0 0 10px rgba(245,158,11,0.5);"></p>
         
-        <p style="text-align:center; color:#94a3b8; font-size:14px; margin-top: -5px;">Sĩ số hiện tại: <b id="player-count" style="color:var(--gold); font-size: 16px;">0</b>/10</p>
+        <p style="text-align:center; color:#94a3b8; font-size:14px; margin-top: -5px;">Sĩ số hiện tại: <b id="player-count" style="color:var(--gold); font-size: 18px;">0</b>/10</p>
         
-        <div id="lobby-list" style="margin: 10px 0 20px 0; max-height: 300px; overflow-y: auto;"></div>
+        <div id="lobby-list" style="margin: 15px 0 25px 0; max-height: 350px; overflow-y: auto; padding-right: 5px;"></div>
         
         <div id="host-controls" class="hidden">
             <button class="btn-blue" id="btn-add-bot" onclick="addBot()">+ THÊM BOT (AI)</button>
             <button id="btn-start" onclick="startGame()">BẮT ĐẦU GAME</button>
         </div>
-        <p id="wait-msg" class="hidden" style="text-align:center; font-style: italic; font-size: 13px; color: #888;">Đợi Host bắt đầu game...</p>
+        <p id="wait-msg" class="hidden" style="text-align:center; font-style: italic; font-size: 14px; color: #cbd5e1; margin-bottom: 20px;">Đợi Host bắt đầu game...</p>
         <button class="btn-gray" onclick="leaveRoom()">THOÁT PHÒNG</button>
     </div>
 
     <div id="view-game" class="hidden">
-        <div class="glass" style="padding: 15px 20px; margin-bottom: 10px;">
+        <div class="glass" style="padding: 20px; margin-bottom: 15px;">
             <div class="quest-board" id="quest-board"></div>
-            <div style="text-align:center; margin-top:5px; font-size:13px; color:#cbd5e1;" id="failed-bar">Vote đội hình thất bại: 0/5 lần</div>
+            <div style="text-align:center; margin-top:10px; font-size:13px; color:#cbd5e1; font-weight: 600;" id="failed-bar">Vote đội hình thất bại: 0/5 lần</div>
             
-            <div id="mission-result-display" style="text-align:center; font-weight:bold; font-size: 14px; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid var(--glass-border); line-height: 1.5;" class="hidden"></div>
+            <div id="mission-result-display" style="text-align:center; font-weight:bold; font-size: 14px; margin-top: 15px; padding: 12px; background: rgba(0,0,0,0.4); border-radius: 12px; border: 1px solid var(--glass-border); line-height: 1.6;" class="hidden"></div>
             
             <div class="quest-rules" id="quest-rule"></div>
         </div>
 
         <div class="circle-container" id="player-circle"></div>
-        <div style="text-align:center; color:#94a3b8; font-size:13px; margin-bottom: 20px;">
+        <div style="text-align:center; color:#94a3b8; font-size:13px; margin-bottom: 25px; font-weight: 600;">
             <span style="margin-right:15px;">👑 Vua (Chọn đội)</span>
             <span>💧 Lady (Soi vai trò)</span>
         </div>
@@ -172,44 +353,44 @@
                 <button class="btn-gray" onclick="toggleRole()">👀 XEM VAI TRÒ BÍ MẬT CỦA BẠN</button>
             </div>
 
-            <h3 id="game-status" style="margin: 20px 0; font-size: 16px; color:#cbd5e1; text-align: center;"></h3>
+            <h3 id="game-status" style="margin: 25px 0; font-size: 17px; color:#f8fafc; text-align: center;"></h3>
 
             <div id="phase-select" class="hidden">
-                <p style="text-align:center; color:var(--gold);">Bạn là Vua! Hãy click vào vòng tròn để chọn <b><span id="num-needed"></span></b> người.</p>
-                <button class="btn-gold" style="margin-top:10px;" onclick="submitTeam(this)">CHỐT ĐỘI HÌNH</button>
+                <p style="text-align:center; color:var(--gold-light); font-weight: 600;">Bạn là Vua! Hãy click vào vòng tròn để chọn <b><span id="num-needed" style="font-size: 20px;"></span></b> người.</p>
+                <button class="btn-gold" style="margin-top:15px;" onclick="submitTeam(this)">CHỐT ĐỘI HÌNH</button>
             </div>
 
             <div id="phase-vote" class="hidden">
-                <p style="text-align:center;">Bạn có đồng ý cho đội hình này làm nhiệm vụ không?</p>
-                <div style="display:flex; gap:10px;">
+                <p style="text-align:center; font-weight: 600; margin-bottom: 20px;">Bạn có đồng ý cho đội hình này làm nhiệm vụ không?</p>
+                <div style="display:flex; gap:15px;">
                     <button onclick="castVote('YES', this)" class="btn-green">ĐỒNG Ý (✔)</button>
                     <button onclick="castVote('NO', this)" class="btn-red">TỪ CHỐI (✖)</button>
                 </div>
             </div>
 
             <div id="phase-mission" class="hidden">
-                <p style="text-align:center;">Bạn thuộc đội nhiệm vụ. Hãy ra quyết định bí mật:</p>
-                <div style="display:flex; gap:10px;">
+                <p style="text-align:center; font-weight: 600; margin-bottom: 20px;">Bạn thuộc đội nhiệm vụ. Hãy ra quyết định bí mật:</p>
+                <div style="display:flex; gap:15px;">
                     <button onclick="castMission('WIN', this)" class="btn-blue">THÀNH CÔNG</button>
                     <button id="btn-ms-fail" onclick="castMission('FAIL', this)" class="btn-red">THẤT BẠI</button>
                 </div>
             </div>
 
             <div id="phase-lady" class="hidden">
-                <p style="text-align:center; color:var(--blue);">Lady of the Lake! Chọn 1 người bên dưới để soi phe:</p>
-                <div id="lady-list" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:15px;"></div>
-                <button class="btn-gold" style="margin-top:10px;" onclick="submitLady(this)">XÁC NHẬN SOI</button>
+                <p style="text-align:center; color:var(--blue); font-weight: 600; margin-bottom: 20px; text-shadow: 0 0 10px rgba(59,130,246,0.4);">Lady of the Lake! Chọn 1 người bên dưới để soi phe:</p>
+                <div id="lady-list" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:20px;"></div>
+                <button class="btn-gold" onclick="submitLady(this)">XÁC NHẬN SOI</button>
             </div>
 
             <div id="phase-assassin" class="hidden">
-                <p class="red-text" style="text-align:center; font-size: 16px;">🔪 Sát thủ! Chọn người bạn nghĩ là Merlin!</p>
-                <div id="assassin-list" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:15px;"></div>
-                <button class="btn-red" style="margin-top:10px;" onclick="submitAssassin(this)">ÁM SÁT</button>
+                <p class="red-text" style="text-align:center; font-size: 17px; margin-bottom: 20px;">🔪 Sát thủ! Chọn người bạn nghĩ là Merlin!</p>
+                <div id="assassin-list" style="display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:20px;"></div>
+                <button class="btn-red" onclick="submitAssassin(this)">ÁM SÁT</button>
             </div>
 
             <div id="phase-result" class="hidden">
-                <div id="result-msg" style="padding: 20px; font-size: 20px; font-weight: bold; border-radius: 12px; margin-bottom: 20px; background: rgba(0,0,0,0.5); text-align: center;"></div>
-                <div id="endgame-roles" style="text-align:left; font-size: 14px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px; line-height:1.8;"></div>
+                <div id="result-msg" style="padding: 25px; font-size: 22px; font-weight: 800; border-radius: 20px; margin-bottom: 25px; background: rgba(0,0,0,0.6); text-align: center; border: 1px solid var(--glass-border); box-shadow: inset 0 0 20px rgba(0,0,0,0.8);"></div>
+                <div id="endgame-roles" style="text-align:left; font-size: 15px; background: rgba(0,0,0,0.3); padding: 20px; border-radius: 15px; margin-bottom: 25px; line-height:2; border: 1px solid var(--glass-border);"></div>
                 <button class="btn-gold" id="btn-next" onclick="resetGameForLobby()">BẮT ĐẦU VÁN MỚI (Lobby Cũ)</button>
                 <button class="btn-gray" onclick="leaveRoom()">THOÁT PHÒNG</button>
             </div>
@@ -326,7 +507,7 @@
                 let isThisHost = realPlayers.length > 0 && p.id === realPlayers[0].id;
                 let icon = p.bot ? '🤖' : (isThisHost ? '👑' : '👤');
                 let kickBtn = (isHostGlobal && p.id !== myID) 
-                    ? `<button class="btn-red" style="width: auto; padding: 6px 12px; margin: 0; font-size: 11px;" onclick="kickPlayer('${p.id}')">KICK</button>` : '';
+                    ? `<button class="btn-red" style="width: auto; padding: 8px 15px; margin: 0; font-size: 11px; border-radius: 50px;" onclick="kickPlayer('${p.id}')">KICK</button>` : '';
 
                 return `<div class="lobby-player">
                     <span>${icon} <b>${p.name}</b> ${p.id === myID ? '(Bạn)' : ''} ${status}</span>
