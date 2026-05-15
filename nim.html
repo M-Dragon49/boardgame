@@ -7,76 +7,180 @@
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+        
         :root {
-            --blue: #3b82f6; --red: #ef4444; --gold: #f59e0b; --green: #10b981; --dark: #0f172a;
-            --glass-bg: rgba(30, 41, 59, 0.8); --glass-border: rgba(255, 255, 255, 0.15);
+            --blue: #3b82f6; 
+            --red: #ef4444; 
+            --gold: #f59e0b; 
+            --gold-light: #fbbf24;
+            --green: #10b981; 
+            --dark: #0f172a;
+            --glass-bg: rgba(30, 41, 59, 0.5); 
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
+        
+        * { box-sizing: border-box; }
+
         body {
-            font-family: 'Montserrat', sans-serif; background: var(--dark);
-            background-image: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: #f8fafc; margin: 0; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; padding: 20px; box-sizing: border-box;
+            font-family: 'Montserrat', sans-serif; 
+            background-color: var(--dark);
+            color: #f8fafc; 
+            margin: 0; 
+            min-height: 100vh;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            padding: 40px 15px 20px 15px; 
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* --- BACKGROUND EFFECTS --- */
+        body::before, body::after {
+            content: '';
+            position: fixed;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0) 70%);
+            z-index: -1;
+            animation: floating 10s infinite ease-in-out alternate;
+        }
+        body::after {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, rgba(15, 23, 42, 0) 70%);
+            top: auto;
+            bottom: -10%;
+            left: -10%;
+            animation-delay: -5s;
+        }
+        @keyframes floating {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(10%, 15%); }
         }
         
         .back-home {
             position: fixed; top: 20px; left: 20px; z-index: 1000;
             background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border); padding: 10px 18px; border-radius: 12px;
-            color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 600;
+            border: 1px solid var(--glass-border); padding: 10px 20px; border-radius: 50px;
+            color: #94a3b8; text-decoration: none; font-size: 14px; font-weight: 700;
             transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
-        .back-home:hover { color: white; border-color: var(--gold); transform: translateX(5px); }
+        .back-home:hover { 
+            color: white; border-color: var(--gold); 
+            transform: translateX(5px); box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+            background: rgba(30, 41, 59, 0.8);
+        }
 
         .glass {
-            background: var(--glass-bg); backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border); border-radius: 20px;
-            padding: 25px; width: 100%; max-width: 500px; margin-top: 50px; box-sizing: border-box;
+            background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border); border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            padding: 35px 25px; width: 100%; max-width: 500px; margin-top: 30px;
+            animation: fadeInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-        h1 { text-align: center; color: var(--gold); text-shadow: 0 2px 10px rgba(0,0,0,0.5); margin-bottom: 25px; text-transform: uppercase; font-size: 1.8rem; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 { 
+            text-align: center; 
+            margin-top: 0; margin-bottom: 15px; 
+            font-size: 2rem;
+            background: linear-gradient(to right, var(--gold-light), var(--gold), #ea580c);
+            -webkit-background-clip: text; background-clip: text;
+            color: transparent; text-transform: uppercase; letter-spacing: 2px;
+            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.3));
+        }
+
+        /* --- INPUTS --- */
         input {
-            width: 100%; padding: 14px; margin-bottom: 12px; border-radius: 12px; border: 1px solid var(--glass-border);
-            background: rgba(0,0,0,0.4); color: white; box-sizing: border-box; font-family: inherit; font-size: 15px;
+            width: 100%; padding: 16px 25px; margin-bottom: 15px; 
+            border-radius: 50px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.3); color: white; font-size: 15px; font-family: inherit;
+            transition: all 0.3s ease; text-align: center;
         }
-        input:focus { outline: none; border-color: var(--gold); }
+        input:focus { 
+            outline: none; border-color: var(--gold); background: rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.3); 
+        }
+
+        /* --- BUTTONS --- */
         button {
-            width: 100%; padding: 14px; border-radius: 12px; border: none; font-weight: bold; font-size: 14px;
-            cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; margin-bottom: 10px; transition: 0.2s;
+            width: 100%; padding: 16px 30px; border-radius: 50px; border: 2px solid transparent; 
+            font-weight: 800; font-size: 14px; letter-spacing: 1px;
+            cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; 
+            margin-bottom: 12px; transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
         }
-        button:hover:not(:disabled) { filter: brightness(1.2); transform: translateY(-2px); }
-        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        button:hover:not(:disabled) { 
+            transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); filter: brightness(1.1);
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
         
-        .btn-bot { background: #8b5cf6; } 
+        .btn-bot { background: #8b5cf6; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.2); } 
+        .btn-bot:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4); }
         
-        .row { display: flex; justify-content: center; gap: 12px; margin: 18px 0; }
+        .btn-gold { background: var(--gold); color: #000; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2); }
+        .btn-gold:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); }
+
+        /* --- GAME BOARD --- */
+        .row { display: flex; justify-content: center; gap: 16px; margin: 20px 0; }
         .circle {
-            width: 48px; height: 48px; background: #1e293b; border: 2px solid #475569;
-            border-radius: 50%; cursor: pointer; transition: 0.3s;
+            width: 55px; height: 55px; background: rgba(30, 41, 59, 0.9); border: 2px solid #475569;
+            border-radius: 50%; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            flex-shrink: 0; /* Ngăn chặn vòng tròn bị méo */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
-        .circle.selected { background: var(--blue); border-color: white; box-shadow: 0 0 20px var(--blue); transform: scale(1.1); }
+        .circle:hover:not(.dimmed) { transform: scale(1.05); border-color: #94a3b8; }
+        .circle.selected { 
+            background: var(--blue); border-color: white; 
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); transform: scale(1.15); 
+        }
         
-        /* CLASS MỚI ĐỂ LÀM MỜ VÒNG TRÒN ĐÃ ĐÁNH NẰM YÊN TẠI CHỖ */
         .circle.dimmed { 
-            opacity: 0.15; 
-            cursor: not-allowed; 
-            pointer-events: none; 
-            background: transparent;
-            border-color: #334155;
-            box-shadow: none;
-            transform: scale(0.9); 
+            opacity: 0.1; cursor: not-allowed; pointer-events: none; 
+            background: transparent; border-color: #334155;
+            box-shadow: none; transform: scale(0.85); 
         }
 
         .indicator {
-            text-align: center; padding: 12px; border-radius: 12px; margin-bottom: 20px; font-weight: 800;
+            text-align: center; padding: 15px; border-radius: 15px; margin-bottom: 25px; font-weight: 800; font-size: 15px;
             background: rgba(0,0,0,0.4); border: 1px solid var(--glass-border);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.2); letter-spacing: 1px;
         }
-        .score-box { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: var(--gold); background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;}
-        .player-name { display: block; font-size: 12px; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
-        .score-num { font-size: 24px; color: white; }
+        
+        .score-box { 
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; 
+            font-weight: bold; color: var(--gold); background: rgba(0,0,0,0.3); 
+            padding: 15px 25px; border-radius: 16px; border: 1px solid var(--glass-border);
+        }
+        .player-name { display: block; font-size: 13px; color: #cbd5e1; text-transform: uppercase; margin-bottom: 5px; }
+        .score-num { font-size: 28px; color: white; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
         
         .fullscreen-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(15, 23, 42, 0.95); z-index: 1000; display: none; 
-            flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px;
+            background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px);
+            z-index: 1000; display: none; flex-direction: column; align-items: center; 
+            justify-content: center; text-align: center; padding: 20px;
+        }
+
+        /* Tối ưu chống chèn ép trên Mobile */
+        @media (max-width: 480px) {
+            .circle {
+                width: 38px; height: 38px; /* Thu nhỏ gọn gàng */
+                border-width: 1px;
+            }
+            .row {
+                gap: 8px; /* Thu nhỏ khoảng cách */
+                margin: 15px 0;
+            }
+            .glass { padding: 25px 15px; }
+            h1 { font-size: 1.6rem; }
+            .score-num { font-size: 22px; }
+            .score-box { padding: 15px; }
         }
     </style>
 </head>
@@ -84,34 +188,37 @@
     <a href="index.html" class="back-home">⬅ TRANG CHỦ</a>
 
     <div id="ready-overlay" class="fullscreen-overlay">
-        <h2 style="color: var(--gold); font-size: 2rem;">ĐANG CHỜ ĐỐI THỦ...</h2>
-        <p id="ready-status" style="color: var(--green); font-size: 1.5rem; font-weight: bold;">Sẵn sàng: 1/2</p>
+        <h2 style="color: var(--gold); font-size: 2rem; margin-bottom: 10px; text-shadow: 0 0 15px rgba(245,158,11,0.5);">ĐANG CHỜ ĐỐI THỦ...</h2>
+        <p id="ready-status" style="color: var(--green); font-size: 1.5rem; font-weight: bold; text-shadow: 0 0 15px rgba(16,185,129,0.5);">Sẵn sàng: 1/2</p>
     </div>
 
     <div id="randomizing-overlay" class="fullscreen-overlay">
-        <h2 id="random-msg" style="color: var(--gold); font-size: 2rem;">Đang tung đồng xu...</h2>
-        <p id="random-sub" style="color: #94a3b8;">Ai sẽ đi trước đây?</p>
+        <div style="font-size: 60px; margin-bottom: 20px; animation: floating 2s infinite ease-in-out;">🪙</div>
+        <h2 id="random-msg" style="color: var(--gold); font-size: 2rem; margin-bottom: 10px; text-shadow: 0 0 15px rgba(245,158,11,0.5);">Đang tung đồng xu...</h2>
+        <p id="random-sub" style="color: #cbd5e1; font-size: 1.2rem;">Ai sẽ đi trước đây?</p>
     </div>
 
     <div id="lobby" class="glass">
         <h1>AI CUỐI CÙNG<br>NGƯỜI ĐÓ CHẾT</h1>
-        <p style="text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px;">Trò chơi chiến thuật lấy viên cuối là THUA</p>
+        <p style="text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 25px; line-height: 1.5;">Kẻ lấy viên cuối cùng là kẻ thua cuộc.<br>Hãy tính toán cẩn thận!</p>
         
         <input type="text" id="my-name-input" placeholder="Bắt buộc nhập tên (Vd: Faker, Chovy...)" maxlength="15">
 
-        <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 20px;">
-            <small style="color: #94a3b8;">ID Phòng Của Bạn:</small>
-            <div id="my-id" style="font-size: 22px; font-weight: 800; color: var(--red); letter-spacing: 2px;">...</div>
+        <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.1);">
+            <small style="color: #94a3b8; font-weight: 600; text-transform: uppercase;">ID Phòng Của Bạn:</small>
+            <div id="my-id" style="font-size: 24px; font-weight: 800; color: var(--red); letter-spacing: 2px; margin-top: 5px; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">...</div>
         </div>
         
         <input type="text" id="peer-id-input" placeholder="Nhập ID phòng đối thủ để tham gia">
         <button onclick="connectToPeer()">BẮT ĐẦU THÁCH ĐẤU ONLINE</button>
         
-        <div style="margin: 20px 0; border-top: 1px solid var(--glass-border); padding-top: 20px;"></div>
+        <div style="margin: 25px 0; border-top: 1px solid var(--glass-border); position: relative;">
+            <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--dark); padding: 0 15px; color: #94a3b8; font-size: 13px; font-weight: bold;">HOẶC</span>
+        </div>
         
         <button class="btn-bot" onclick="startBotMode()">🤖 CHƠI VỚI MÁY (BOT THÔNG MINH)</button>
 
-        <p id="status" style="text-align:center; font-size: 12px; color: var(--green); margin-top: 15px;">Đang kết nối server...</p>
+        <p id="status" style="text-align:center; font-size: 13px; color: var(--green); margin-top: 20px; font-weight: 600;">Đang kết nối server...</p>
     </div>
 
     <div id="game-view" class="glass" style="display:none;">
@@ -120,14 +227,17 @@
                 <span class="player-name" id="name-you">BẠN</span>
                 <span class="score-num" id="s-you">0</span>
             </div>
+            <div style="font-size: 24px; color: #475569; font-weight: 800;">-</div>
             <div style="text-align: right;">
                 <span class="player-name" id="name-opp">ĐỐI THỦ</span>
                 <span class="score-num" id="s-opp">0</span>
             </div>
         </div>
         <div id="turn-txt" class="indicator">ĐANG CHỜ...</div>
-        <div id="board"></div>
-        <button id="btn-move" onclick="makeMove()" disabled style="background: var(--green); margin-top: 25px;">CHỐT LƯỢT ĐI</button>
+        
+        <div id="board" style="margin-bottom: 30px;"></div>
+        
+        <button id="btn-move" onclick="makeMove()" disabled style="background: var(--green);">CHỐT LƯỢT ĐI</button>
         <button id="btn-restart" onclick="requestRestart()" style="display:none; background: var(--gold); color:black;">VÁN MỚI (SẴN SÀNG)</button>
     </div>
 
@@ -152,7 +262,6 @@
         let myName = "";
         let oppName = "Đối Thủ";
 
-        // Ma trận lưu trạng thái của TỪNG viên tại chỗ (true = còn, false = đã bị lấy/mờ)
         const initialRows = [3, 4, 7];
         let boardState = []; 
         let selRow = null; 
@@ -309,7 +418,6 @@
             document.getElementById('name-you').innerText = myName;
             document.getElementById('random-msg').style.color = "var(--gold)"; 
 
-            // Luôn luôn hiển thị Tung đồng xu
             document.getElementById('random-msg').innerText = "Đang tung đồng xu...";
             document.getElementById('random-sub').innerText = "Ai sẽ đi trước đây?";
             
@@ -352,7 +460,6 @@
                         }
                         c.onclick = () => select(rIdx, cIdx);
                     } else {
-                        // Vẽ mờ tại đúng vị trí đó
                         c.className = 'circle dimmed'; 
                     }
                     
@@ -423,7 +530,7 @@
                 document.getElementById('s-you').innerText = scores.you;
                 document.getElementById('s-opp').innerText = scores.opp;
                 
-                document.getElementById('turn-txt').innerText = `${winName.toUpperCase()} ĐÃ CHIẾN THẮNG!`;
+                document.getElementById('turn-txt').innerText = `🎉 ${winName.toUpperCase()} ĐÃ CHIẾN THẮNG!`;
                 document.getElementById('turn-txt').style.color = isYouWin ? "var(--green)" : "var(--red)";
                 
                 document.getElementById('btn-restart').style.display = 'block';
@@ -445,7 +552,6 @@
                     overlay.style.display = 'none';
                     resetGameUI();
                     
-                    // BOT Mode: Tung đồng xu random lại từ đầu
                     const randomStarter = Math.random() < 0.5;
                     startTurnSequence(randomStarter, oppName, true);
                 }, 1000);
@@ -482,7 +588,6 @@
                     resetGameUI();
 
                     if (isHost) {
-                        // Online Mode: Tung đồng xu random lại từ đầu
                         const randomStarter = Math.random() < 0.5;
                         conn.send({type: 'START_INFO', youStart: !randomStarter, hostName: myName, isRandom: true});
                         startTurnSequence(randomStarter, oppName, true);
