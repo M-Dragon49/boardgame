@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ai Cuối Cùng Người Đó Chết</title>
+    <title>Đếm Số Chiến Lược - Tới 100 Là Thắng!</title>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+        /* Sử dụng font Be Vietnam Pro để tiếng Việt hiển thị hoàn hảo 100% */
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;800&display=swap');
         
         :root {
             --blue: #3b82f6; 
@@ -22,7 +23,7 @@
         * { box-sizing: border-box; }
 
         body {
-            font-family: 'Montserrat', sans-serif; 
+            font-family: 'Be Vietnam Pro', sans-serif; 
             background-color: var(--dark);
             color: #f8fafc; 
             margin: 0; 
@@ -110,7 +111,7 @@
         /* --- BUTTONS --- */
         button {
             width: 100%; padding: 16px 30px; border-radius: 50px; border: 2px solid transparent; 
-            font-weight: 800; font-size: 14px; letter-spacing: 1px;
+            font-weight: 800; font-size: 14px; font-family: 'Be Vietnam Pro', sans-serif; letter-spacing: 1px;
             cursor: pointer; background: var(--blue); color: white; text-transform: uppercase; 
             margin-bottom: 12px; transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(59, 130, 246, 0.2);
@@ -118,7 +119,7 @@
         button:hover:not(:disabled) { 
             transform: translateY(-3px); box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4); filter: brightness(1.1);
         }
-        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        button:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
         
         .btn-bot { background: #8b5cf6; box-shadow: 0 5px 15px rgba(139, 92, 246, 0.2); } 
         .btn-bot:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4); }
@@ -126,24 +127,41 @@
         .btn-gold { background: var(--gold); color: #000; box-shadow: 0 5px 15px rgba(245, 158, 11, 0.2); }
         .btn-gold:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4); }
 
-        /* --- GAME BOARD --- */
-        .row { display: flex; justify-content: center; gap: 16px; margin: 20px 0; }
-        .circle {
-            width: 55px; height: 55px; background: rgba(30, 41, 59, 0.9); border: 2px solid #475569;
-            border-radius: 50%; cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            flex-shrink: 0; /* Ngăn chặn vòng tròn bị méo */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        /* --- GAMEPLAY UI --- */
+        .total-display-wrapper {
+            background: rgba(0,0,0,0.4); border-radius: 20px; padding: 30px 10px;
+            text-align: center; margin-bottom: 25px; border: 2px solid var(--glass-border);
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
         }
-        .circle:hover:not(.dimmed) { transform: scale(1.05); border-color: #94a3b8; }
-        .circle.selected { 
-            background: var(--blue); border-color: white; 
-            box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); transform: scale(1.15); 
+
+        .total-number {
+            font-size: 80px; font-weight: 800; line-height: 1;
+            color: white; text-shadow: 0 0 25px rgba(245, 158, 11, 0.6);
+            transition: all 0.3s ease;
         }
-        
-        .circle.dimmed { 
-            opacity: 0.1; cursor: not-allowed; pointer-events: none; 
-            background: transparent; border-color: #334155;
-            box-shadow: none; transform: scale(0.85); 
+
+        .target-text {
+            color: var(--gold); font-size: 14px; font-weight: 800; letter-spacing: 2px;
+            text-transform: uppercase; margin-top: 10px;
+        }
+
+        .numpad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .num-btn {
+            background: rgba(30, 41, 59, 0.9); border: 1px solid #475569;
+            color: white; font-size: 20px; font-weight: 800; padding: 15px 0;
+            border-radius: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin: 0;
+        }
+        .num-btn:hover:not(:disabled) {
+            background: var(--blue); border-color: white; color: white;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
         }
 
         .indicator {
@@ -167,20 +185,15 @@
             justify-content: center; text-align: center; padding: 20px;
         }
 
-        /* Tối ưu chống chèn ép trên Mobile */
+        /* --- MOBILE RESPONSIVE --- */
         @media (max-width: 480px) {
-            .circle {
-                width: 38px; height: 38px; /* Thu nhỏ gọn gàng */
-                border-width: 1px;
-            }
-            .row {
-                gap: 8px; /* Thu nhỏ khoảng cách */
-                margin: 15px 0;
-            }
             .glass { padding: 25px 15px; }
             h1 { font-size: 1.6rem; }
             .score-num { font-size: 22px; }
             .score-box { padding: 15px; }
+            .total-number { font-size: 65px; }
+            .numpad { gap: 8px; }
+            .num-btn { padding: 12px 0; font-size: 18px; }
         }
     </style>
 </head>
@@ -198,19 +211,21 @@
         <p id="random-sub" style="color: #cbd5e1; font-size: 1.2rem;">Ai sẽ đi trước đây?</p>
     </div>
 
+    <!-- LOBBY CHỜ KẾT NỐI -->
     <div id="lobby" class="glass">
-        <h1>AI CUỐI CÙNG<br>NGƯỜI ĐÓ CHẾT</h1>
-        <p style="text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 25px; line-height: 1.5;">Kẻ lấy viên cuối cùng là kẻ thua cuộc.<br>Hãy tính toán cẩn thận!</p>
+        <h1>ĐẾM SỐ<br>CHIẾN LƯỢC</h1>
+        <p style="text-align: center; font-size: 14px; color: #94a3b8; margin-bottom: 25px; line-height: 1.6;">Lần lượt cộng thêm từ +1 đến +10.<br>Ai đạt đến <b>MỐC 100</b> trước người đó sẽ giành chiến thắng!</p>
         
-        <input type="text" id="my-name-input" placeholder="Bắt buộc nhập tên (Vd: Faker, Chovy...)" maxlength="15">
+        <input type="text" id="my-name-input" placeholder="Nhập tên của bạn (Bắt buộc)" maxlength="15">
 
         <div style="background: rgba(0,0,0,0.4); padding: 20px; border-radius: 16px; border: 1px dashed var(--gold); text-align: center; margin-bottom: 25px; box-shadow: inset 0 0 20px rgba(245, 158, 11, 0.1);">
-            <small style="color: #94a3b8; font-weight: 600; text-transform: uppercase;">ID Phòng Của Bạn:</small>
+            <small style="color: #94a3b8; font-weight: 600; text-transform: uppercase;">Mã Phòng Của Bạn:</small>
             <div id="my-id" style="font-size: 24px; font-weight: 800; color: var(--red); letter-spacing: 2px; margin-top: 5px; text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);">...</div>
+            <small style="color: var(--gold); font-size: 12px; display: block; margin-top: 8px;">Gửi mã này cho bạn bè để họ Tham Gia</small>
         </div>
         
-        <input type="text" id="peer-id-input" placeholder="Nhập ID phòng đối thủ để tham gia">
-        <button onclick="connectToPeer()">BẮT ĐẦU THÁCH ĐẤU ONLINE</button>
+        <input type="text" id="peer-id-input" placeholder="Nhập mã phòng của bạn bè để tham gia">
+        <button onclick="connectToPeer()">THAM GIA PHÒNG</button>
         
         <div style="margin: 25px 0; border-top: 1px solid var(--glass-border); position: relative;">
             <span style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--dark); padding: 0 15px; color: #94a3b8; font-size: 13px; font-weight: bold;">HOẶC</span>
@@ -218,9 +233,10 @@
         
         <button class="btn-bot" onclick="startBotMode()">🤖 CHƠI VỚI MÁY (BOT THÔNG MINH)</button>
 
-        <p id="status" style="text-align:center; font-size: 13px; color: var(--green); margin-top: 20px; font-weight: 600;">Đang kết nối server...</p>
+        <p id="status" style="text-align:center; font-size: 13px; color: var(--green); margin-top: 20px; font-weight: 600;">Đang khởi tạo máy chủ...</p>
     </div>
 
+    <!-- GIAO DIỆN GAME CHÍNH -->
     <div id="game-view" class="glass" style="display:none;">
         <div class="score-box">
             <div style="text-align: left;">
@@ -233,24 +249,42 @@
                 <span class="score-num" id="s-opp">0</span>
             </div>
         </div>
+        
         <div id="turn-txt" class="indicator">ĐANG CHỜ...</div>
         
-        <div id="board" style="margin-bottom: 30px;"></div>
+        <div class="total-display-wrapper">
+            <div class="total-number" id="current-total">0</div>
+            <div class="target-text">MỤC TIÊU: 100</div>
+        </div>
         
-        <button id="btn-move" onclick="makeMove()" disabled style="background: var(--green);">CHỐT LƯỢT ĐI</button>
+        <!-- Bàn phím số để chọn -->
+        <div class="numpad" id="numpad">
+            <button class="num-btn" onclick="makeMove(1)">+1</button>
+            <button class="num-btn" onclick="makeMove(2)">+2</button>
+            <button class="num-btn" onclick="makeMove(3)">+3</button>
+            <button class="num-btn" onclick="makeMove(4)">+4</button>
+            <button class="num-btn" onclick="makeMove(5)">+5</button>
+            <button class="num-btn" onclick="makeMove(6)">+6</button>
+            <button class="num-btn" onclick="makeMove(7)">+7</button>
+            <button class="num-btn" onclick="makeMove(8)">+8</button>
+            <button class="num-btn" onclick="makeMove(9)">+9</button>
+            <button class="num-btn" onclick="makeMove(10)">+10</button>
+        </div>
+        
         <button id="btn-restart" onclick="requestRestart()" style="display:none; background: var(--gold); color:black;">VÁN MỚI (SẴN SÀNG)</button>
     </div>
 
     <script>
-      const peer = new Peer({
-    config: {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' }
-        ]
-    }
-});
+        const peer = new Peer({
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' }
+                ]
+            }
+        });
+        
         let conn, myId;
         let isHost = false; 
         let isMyTurn = false;
@@ -262,16 +296,15 @@
         let myName = "";
         let oppName = "Đối Thủ";
 
-        const initialRows = [3, 4, 7];
-        let boardState = []; 
-        let selRow = null; 
-        let selectedIndices = []; 
+        // Logic game đếm số
+        const TARGET = 100;
+        let currentTotal = 0; 
         let scores = {you: 0, opp: 0};
 
         peer.on('open', id => { 
             myId = id; 
             document.getElementById('my-id').innerText = id; 
-            document.getElementById('status').innerText = "Sẵn sàng nhận thách đấu!"; 
+            document.getElementById('status').innerText = "Máy chủ đã sẵn sàng!"; 
         });
         
         peer.on('connection', c => { 
@@ -302,14 +335,14 @@
             const id = document.getElementById('peer-id-input').value.trim();
             
             if (!inputName) return alert("Vui lòng nhập tên của bạn trước khi bắt đầu!");
-            if (!id) return alert("Vui lòng nhập ID phòng của đối thủ!");
+            if (!id) return alert("Vui lòng nhập mã phòng của bạn bè!");
             
             isHost = false;
             saveMyName();
             conn = peer.connect(id, { reliable: true });
             isBotMode = false;
             setupConn();
-            document.getElementById('status').innerText = "Đang kết nối với đối thủ...";
+            document.getElementById('status').innerText = "Đang kết nối vào phòng...";
         }
 
         function saveMyName() {
@@ -336,9 +369,9 @@
                     startTurnSequence(data.youStart, oppName, data.isRandom); 
                 }
                 if(data.type === 'MOVE') { 
-                    boardState = data.board; 
+                    currentTotal = data.total; 
                     isMyTurn = true; 
-                    render(); 
+                    updateBoard(); 
                     checkWin("OPP"); 
                 }
                 if(data.type === 'READY_UP') {
@@ -359,56 +392,49 @@
             
             saveMyName();
             isBotMode = true;
-            oppName = "Bot Master 🤖";
+            oppName = "Bot Thông Minh 🤖";
             document.getElementById('name-opp').innerText = oppName;
             
             const randomStarter = Math.random() < 0.5;
             startTurnSequence(randomStarter, oppName, true); 
         }
 
+        // --- BOT LOGIC (ĐẾM SỐ CHIẾN LƯỢC) ---
         function executeBotTurn() {
             updateTurnText(false, true); 
             setTimeout(() => {
-                let currentRows = boardState.map(row => row.filter(isActive => isActive).length);
-                let move = getBestBotMove(currentRows);
+                let move = getBestBotMove(currentTotal);
                 
-                let taken = 0;
-                for(let i = 0; i < boardState[move.row].length; i++) {
-                    if (boardState[move.row][i] && taken < move.take) {
-                        boardState[move.row][i] = false; 
-                        taken++;
-                    }
+                // An toàn: Đảm bảo Bot không vô tình cộng quá 100
+                if (currentTotal + move > TARGET) {
+                    move = TARGET - currentTotal;
                 }
                 
+                currentTotal += move;
                 isMyTurn = true;
-                render();
+                updateBoard();
                 checkWin("OPP");
             }, 1000 + Math.random() * 1000); 
         }
 
-        function getBestBotMove(counts) {
-            let nonOnes = counts.filter(x => x > 1).length;
-
-            if (nonOnes === 1) {
-                let ones = counts.filter(x => x === 1).length;
-                let targetIndex = counts.findIndex(x => x > 1);
-                let leaveAmount = (ones % 2 === 0) ? 1 : 0;
-                let takeAmount = counts[targetIndex] - leaveAmount;
-                return { row: targetIndex, take: takeAmount };
-            }
-
-            let nimSum = counts.reduce((a, b) => a ^ b, 0);
-            if (nimSum !== 0) {
-                for (let i = 0; i < counts.length; i++) {
-                    let target = counts[i] ^ nimSum;
-                    if (target < counts[i]) {
-                        return { row: i, take: counts[i] - target };
-                    }
+        function getBestBotMove(current) {
+            // Chiến thuật thắng: Đưa tổng về các bội số của 11 + 1 (vd: 12, 23, 34,... 89, 100)
+            // Tức là mục tiêu để lại cho người kia là (100 - X) chia hết cho 11.
+            let remainder = (TARGET - current) % 11;
+            
+            if (remainder === 0) {
+                // Đang nằm ở vị trí thua (ví dụ: đang là 89, cần 11 bước nữa mới tới 100)
+                // Bot chọn ngẫu nhiên từ 1 đến 10
+                let randomMove = Math.floor(Math.random() * 10) + 1;
+                // Nếu khoảng cách tới 100 nhỏ hơn 10 thì chỉ bốc ngẫu nhiên số nhỏ hơn
+                if (current + randomMove > TARGET) {
+                    return TARGET - current;
                 }
+                return randomMove;
+            } else {
+                // Đi đúng số bước để dồn đối thủ vào thế bí
+                return remainder;
             }
-            let available = counts.map((v, i) => ({v, i})).filter(x => x.v > 0);
-            let randRow = available[Math.floor(Math.random() * available.length)];
-            return { row: randRow.i, take: 1 };
         }
 
         // --- GIAO DIỆN & RANDOM LƯỢT ---
@@ -442,76 +468,50 @@
             resetGameUI();
         }
 
-        function render() {
-            const b = document.getElementById('board'); 
-            b.innerHTML = '';
+        // --- XỬ LÝ NƯỚC ĐI VÀ GIAO DIỆN BÀN PHÍM ---
+        function updateBoard() {
+            // Cập nhật số hiển thị
+            const totalDisplay = document.getElementById('current-total');
+            totalDisplay.innerText = currentTotal;
             
-            boardState.forEach((rowArray, rIdx) => {
-                const rDiv = document.createElement('div'); 
-                rDiv.className = 'row';
-                
-                rowArray.forEach((isActive, cIdx) => {
-                    const c = document.createElement('div'); 
-                    
-                    if (isActive) {
-                        c.className = 'circle';
-                        if (selRow === rIdx && selectedIndices.includes(cIdx)) {
-                            c.classList.add('selected');
-                        }
-                        c.onclick = () => select(rIdx, cIdx);
-                    } else {
-                        c.className = 'circle dimmed'; 
-                    }
-                    
-                    rDiv.appendChild(c);
-                });
-                
-                b.appendChild(rDiv);
-            });
+            // Cập nhật text trạng thái
             updateTurnText(isMyTurn, false);
+            
+            // Bật/tắt bàn phím số
+            toggleNumpad(isMyTurn);
         }
 
-        function select(rIdx, cIdx) {
-            if(!isMyTurn) return;
-            
-            if(selRow !== null && selRow !== rIdx) {
-                selectedIndices = [];
-            }
-            selRow = rIdx;
-            
-            const pos = selectedIndices.indexOf(cIdx);
-            if (pos > -1) {
-                selectedIndices.splice(pos, 1);
-            } else {
-                selectedIndices.push(cIdx);
-            }
-            
-            if(selectedIndices.length === 0) selRow = null;
-            document.getElementById('btn-move').disabled = selectedIndices.length === 0;
-            
-            render(); 
-        }
-
-        function makeMove() {
-            selectedIndices.forEach(cIdx => {
-                boardState[selRow][cIdx] = false;
+        function toggleNumpad(enable) {
+            const buttons = document.querySelectorAll('#numpad button');
+            buttons.forEach((btn, index) => {
+                const val = index + 1; // Giá trị từ 1 đến 10
+                // Bật nút nếu đến lượt VÀ số đó không làm Tổng vượt qua 100
+                if (enable && (currentTotal + val <= TARGET)) {
+                    btn.disabled = false;
+                } else {
+                    btn.disabled = true;
+                }
             });
+        }
+
+        function makeMove(num) {
+            if (!isMyTurn || currentTotal + num > TARGET) return;
             
+            currentTotal += num;
             isMyTurn = false; 
-            selRow = null; 
-            selectedIndices = [];
-            document.getElementById('btn-move').disabled = true;
             
-            if (!isBotMode) conn.send({type: 'MOVE', board: boardState});
-            render();
+            if (!isBotMode) conn.send({type: 'MOVE', total: currentTotal});
+            updateBoard();
             
-            if (!checkWin("YOU") && isBotMode) executeBotTurn();
+            if (!checkWin("YOU") && isBotMode) {
+                executeBotTurn();
+            }
         }
 
         function updateTurnText(isMe, isBotThinking = false) {
             const t = document.getElementById('turn-txt');
             if (isMe) {
-                t.innerText = "🟢 LƯỢT CỦA BẠN";
+                t.innerText = "🟢 LƯỢT CỦA BẠN CHỌN SỐ";
                 t.style.color = "var(--green)";
             } else {
                 t.innerText = isBotThinking ? "🤖 BOT ĐANG TÍNH TOÁN..." : "⏳ ĐỐI THỦ ĐANG NGHĨ...";
@@ -520,10 +520,8 @@
         }
 
         function checkWin(last) {
-            const activeCount = boardState.flat().filter(isActive => isActive).length;
-            
-            if(activeCount === 0) {
-                const winName = (last === "YOU" ? oppName : myName);
+            if(currentTotal >= TARGET) {
+                const winName = (last === "YOU" ? myName : oppName);
                 const isYouWin = (winName === myName);
                 
                 if(isYouWin) scores.you++; else scores.opp++;
@@ -533,8 +531,12 @@
                 document.getElementById('turn-txt').innerText = `🎉 ${winName.toUpperCase()} ĐÃ CHIẾN THẮNG!`;
                 document.getElementById('turn-txt').style.color = isYouWin ? "var(--green)" : "var(--red)";
                 
+                // Đổi màu số tổng lên Vàng hoặc Đỏ
+                document.getElementById('current-total').style.color = isYouWin ? "var(--green)" : "var(--red)";
+                document.getElementById('current-total').style.textShadow = isYouWin ? "0 0 25px rgba(16,185,129,0.5)" : "0 0 25px rgba(239,68,68,0.5)";
+
+                toggleNumpad(false);
                 document.getElementById('btn-restart').style.display = 'block';
-                document.getElementById('btn-move').style.display = 'none';
                 return true;
             }
             return false;
@@ -597,13 +599,16 @@
         }
 
         function resetGameUI() {
-            boardState = initialRows.map(count => Array(count).fill(true)); 
-            selRow = null; 
-            selectedIndices = [];
+            currentTotal = 0; 
+            const totalElement = document.getElementById('current-total');
+            totalElement.innerText = currentTotal;
+            totalElement.style.color = "white"; // Khôi phục màu sắc ban đầu
+            totalElement.style.textShadow = "0 0 25px rgba(245, 158, 11, 0.6)";
+
             document.getElementById('btn-restart').style.display = 'none';
-            document.getElementById('btn-move').style.display = 'block';
-            document.getElementById('btn-move').disabled = true;
-            render();
+            document.getElementById('numpad').style.display = 'grid';
+            
+            updateBoard();
         }
     </script>
 </body>
