@@ -7,9 +7,6 @@
   <title>Invisible Tic Tac Toe | Boardgame Hub</title>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-   <link rel="icon" type="image/jpeg" href="luckyrex.png">
-  
   <style>
     :root {
       --bg: #0f172a;
@@ -1263,6 +1260,9 @@
     .lobby-online-dot { display:flex; align-items:center; gap:7px; color:#9ab0c8; font-size:.65rem; letter-spacing:.12em; font-weight:800; }
     .lobby-online-dot i,.lobby-live-tag i { width:7px; height:7px; border-radius:50%; background:#34d399; box-shadow:0 0 12px rgba(52,211,153,.8); }
     .lobby-current-player { gap:8px; padding:6px 11px 6px 6px; border:1px solid rgba(148,163,184,.18); border-radius:999px; background:rgba(30,48,72,.65); }
+    .lobby-account-trigger { -webkit-appearance:none; appearance:none; color:var(--text); font:inherit; text-align:left; cursor:pointer; transition:border-color .18s ease,background .18s ease,box-shadow .18s ease; }
+    .lobby-account-trigger:hover { border-color:rgba(56,189,248,.58); background:rgba(14,165,233,.15); box-shadow:0 0 0 3px rgba(56,189,248,.08); }
+    .lobby-account-trigger:focus-visible { outline:3px solid rgba(56,189,248,.6); outline-offset:3px; }
     .lobby-current-avatar { width:32px; height:32px; display:grid; place-items:center; overflow:hidden; border-radius:50%; background:#163c57; font-size:19px; }
     .lobby-current-avatar img { width:100%; height:100%; object-fit:cover; }
     .lobby-current-copy { display:flex; flex-direction:column; gap:2px; }
@@ -1285,7 +1285,7 @@
     .hero-center-mark { z-index:3; display:grid; place-items:center; width:49px; height:49px; border-radius:15px; color:#d9f9ff; font-size:1.65rem; font-weight:900; background:linear-gradient(145deg,#155e75,#0f766e); box-shadow:0 0 36px rgba(45,212,191,.25); }
     .hero-caption { position:absolute; bottom:9px; z-index:3; color:#83a4be; font-size:.53rem; font-weight:900; letter-spacing:.18em; }
     .lobby-layout { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(250px,.8fr); gap:16px; align-items:start; }
-    .lobby-main-card,.lobby-side-card,.profile-drawer,.lobby-rules-drawer { border:1px solid rgba(119,163,200,.18); border-radius:17px; background:linear-gradient(145deg,rgba(20,38,62,.86),rgba(12,24,43,.92)); }
+    .lobby-main-card,.lobby-side-card,.lobby-rules-drawer { border:1px solid rgba(119,163,200,.18); border-radius:17px; background:linear-gradient(145deg,rgba(20,38,62,.86),rgba(12,24,43,.92)); }
     .lobby-main-card { padding:clamp(15px,2vw,23px); }
     .lobby-section-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:17px; }
     .lobby-section-head h2 { margin-top:5px; font-size:1.2rem; letter-spacing:-.03em; }
@@ -1335,28 +1335,14 @@
     .lobby-random-card p { color:#8199b2; font-size:.67rem; line-height:1.45; }
     .random-preview { display:flex; align-items:center; justify-content:space-around; grid-column:1 / -1; margin-top:4px; padding:10px 8px; border:1px solid rgba(148,163,184,.13); border-radius:9px; background:rgba(4,13,26,.35); }
     .random-preview span { color:#b4c9dc; font-size:.59rem; font-weight:900; letter-spacing:.09em; }.random-preview b { color:#4d7395; font-size:.63rem; }
-    .profile-drawer,.lobby-rules-drawer { overflow:hidden; }
-    .profile-drawer summary,.lobby-rules-drawer summary { display:flex; align-items:center; gap:10px; padding:13px; cursor:pointer; list-style:none; }
-    .profile-drawer summary::-webkit-details-marker,.lobby-rules-drawer summary::-webkit-details-marker { display:none; }
+    .lobby-rules-drawer { overflow:hidden; }
+    .lobby-rules-drawer summary { display:flex; align-items:center; gap:10px; padding:13px; cursor:pointer; list-style:none; }
+    .lobby-rules-drawer summary::-webkit-details-marker { display:none; }
     .drawer-icon { width:33px; height:33px; display:grid; place-items:center; border-radius:10px; color:#7dd3fc; background:rgba(14,165,233,.13); font-size:1.05rem; }
-    .profile-drawer summary > span:nth-child(2),.lobby-rules-drawer summary > span:nth-child(2) { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
-    .profile-drawer summary strong,.lobby-rules-drawer summary strong { color:#e2eefb; font-size:.74rem; }
-    .profile-drawer summary small,.lobby-rules-drawer summary small { color:#7f97b0; font-size:.62rem; }
-    .drawer-arrow { color:#78a0bb; transition:transform .2s; }.profile-drawer[open] .drawer-arrow,.lobby-rules-drawer[open] .drawer-arrow { transform:rotate(180deg); }
-    .profile-drawer .profile-hub { margin:0; padding:0 13px 13px; border:0; border-radius:0; background:transparent; }
-    .profile-drawer .profile-hub-heading { margin:0 0 9px; }
-    .profile-drawer .profile-hub-heading h2 { font-size:.8rem; }.profile-drawer .profile-hub-heading p { font-size:.65rem; }
-    .profile-drawer .profile-overview { padding:8px; }.profile-drawer .profile-large-avatar { width:43px; height:43px; flex-basis:43px; font-size:23px; }
-    .profile-drawer .profile-overview-copy strong { font-size:.78rem; }.profile-drawer .profile-overview-copy > span,.profile-drawer .profile-overview-copy small { font-size:.62rem; }
-    .profile-drawer .profile-stats { gap:5px; margin:8px 0; }.profile-drawer .profile-stats div { padding:6px 3px; }.profile-drawer .profile-stats strong { font-size:.8rem; }.profile-drawer .profile-stats span { font-size:.59rem; }
-    .profile-drawer .profile-editor { grid-template-columns:1.1fr .9fr; gap:7px; margin-top:8px; }
-    .profile-drawer .profile-editor input,.profile-drawer .profile-select { min-height:35px; padding:6px 8px; font-size:.72rem; }
-    .profile-drawer .profile-editor .form-group label { font-size:.61rem; }
-    .profile-drawer .profile-upload-group input { padding:5px; font-size:.64rem; }
-    .profile-drawer .profile-actions .btn-start { min-height:39px; font-size:.76rem; }.profile-drawer .profile-save-status { font-size:.63rem; }
-    .profile-drawer .guest-divider { margin:9px 0 6px; font-size:.63rem; }.profile-drawer .guest-row { grid-template-columns:minmax(0,1fr) 54px; }
-    .profile-drawer .guest-row .btn-guest { grid-column:1 / -1; min-height:35px; }
-    .profile-drawer .profile-local-note { margin-top:6px; font-size:.59rem; }
+    .lobby-rules-drawer summary > span:nth-child(2) { display:flex; flex:1; min-width:0; flex-direction:column; gap:3px; }
+    .lobby-rules-drawer summary strong { color:#e2eefb; font-size:.74rem; }
+    .lobby-rules-drawer summary small { color:#7f97b0; font-size:.62rem; }
+    .drawer-arrow { color:#78a0bb; transition:transform .2s; }.lobby-rules-drawer[open] .drawer-arrow { transform:rotate(180deg); }
     .lobby-rules-drawer .rules-box { margin:0; border:0; border-top:1px solid rgba(148,163,184,.12); border-radius:0; padding:11px 14px 13px; font-size:.66rem; }
     .lobby-rules-drawer .rules-box ul { padding-left:17px; }.lobby-rules-drawer .rules-box li + li { margin-top:5px; }
     .lobby-footer-note { padding:6px 3px 0; color:#506c88; font-size:.55rem; font-weight:850; letter-spacing:.13em; text-align:center; }.lobby-footer-note span { color:#2dd4bf; padding:0 4px; }
@@ -1413,7 +1399,7 @@
       .lobby-primary-cta { min-height:45px; font-size:.79rem; }
       .lobby-cta-note { font-size:.59rem; }
       .lobby-side-column { grid-template-columns:1fr; gap:9px; }
-      .lobby-random-card { padding:11px; }.profile-drawer summary,.lobby-rules-drawer summary { padding:10px; }
+      .lobby-random-card { padding:11px; }.lobby-rules-drawer summary { padding:10px; }
       .start-turn-overlay { inset:0; }
     }
     @media(max-width:370px) {
@@ -1462,6 +1448,16 @@
     .account-field input,.account-field select { width:100%; min-width:0; min-height:43px; padding:10px 12px; border:1px solid rgba(125,158,190,.23); border-radius:10px; outline:none; color:#eff8ff; background:#071426; font:inherit; font-size:.84rem; }
     .account-field input:focus,.account-field select:focus { border-color:#38bdf8; box-shadow:0 0 0 3px rgba(56,189,248,.1); }
     .account-field input[type=file] { padding:8px; font-size:.72rem; }
+    .account-profile-summary { margin:0 0 15px; padding:13px; border:1px solid rgba(56,189,248,.2); border-radius:14px; background:linear-gradient(145deg,rgba(8,26,45,.82),rgba(10,22,39,.65)); }
+    .account-profile-summary.hidden { display:none !important; }
+    .account-profile-summary .profile-hub-heading { margin-bottom:9px; }
+    .account-profile-summary .profile-hub-heading h2 { color:#e5f6ff; font-size:.86rem; }
+    .account-profile-summary .profile-hub-heading p { color:#8ea7c2; font-size:.68rem; }
+    .account-profile-summary .profile-overview { padding:9px; background:rgba(2,10,22,.38); }
+    .account-profile-summary .profile-large-avatar { width:48px; height:48px; flex-basis:48px; font-size:25px; }
+    .account-profile-summary .profile-stats { margin:9px 0; }
+    .account-profile-summary .rank-unlocks { margin-top:8px; }
+    .account-profile-save-status { min-height:14px; font-size:.68rem; }
     .account-profile-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px; border:1px solid rgba(56,189,248,.17); border-radius:12px; background:rgba(6,18,34,.55); }
     .account-profile-fields.hidden { display:none; }
     .account-avatar-upload { grid-column:1 / -1; }
@@ -1562,10 +1558,10 @@
       .lobby-primary-cta { min-height:40px; font-size:.72rem; }
       .lobby-cta-note { margin-top:5px; font-size:.54rem; }
       .lobby-side-column,.lobby-footer-note { display:none !important; }
-      .profile-drawer,.lobby-rules-drawer { margin-top:7px; border-radius:10px; }
-      .profile-drawer summary,.lobby-rules-drawer summary { padding:8px 9px; }
-      .profile-drawer summary strong,.lobby-rules-drawer summary strong { font-size:.66rem; }
-      .profile-drawer summary small,.lobby-rules-drawer summary small { font-size:.54rem; }
+      .lobby-rules-drawer { margin-top:7px; border-radius:10px; }
+      .lobby-rules-drawer summary { padding:8px 9px; }
+      .lobby-rules-drawer summary strong { font-size:.66rem; }
+      .lobby-rules-drawer summary small { font-size:.54rem; }
       .profile-hub { margin:0; padding:9px; border:0; border-top:1px solid rgba(148,163,184,.12); border-radius:0; }
       .profile-hub-heading { margin-bottom:8px; }
       .profile-hub-heading h2 { font-size:.76rem; }
@@ -1809,13 +1805,6 @@
        v1.05.1 MOBILE RESTORE — keep account, rules and lobby tools
        visible on phones instead of hiding the entire side column.
        ========================================================= */
-    .lobby-header-account {
-      display:inline-flex; align-items:center; justify-content:center; gap:6px;
-      min-height:34px; padding:6px 10px; border:1px solid rgba(56,189,248,.32);
-      border-radius:10px; color:#dff7ff; background:rgba(14,165,233,.12);
-      font:inherit; font-size:.72rem; font-weight:850; white-space:nowrap; cursor:pointer;
-    }
-    .lobby-header-account:hover { background:rgba(14,165,233,.22); border-color:rgba(56,189,248,.6); }
     .chat-toast-avatar { flex:0 0 30px; width:30px; height:30px; border-radius:50%; overflow:hidden; }
     .chat-toast-avatar img { display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit; }
     .profile-chip-mobile-label { display:none; }
@@ -1833,11 +1822,10 @@
       }
       .lobby-header { flex-wrap:wrap; align-items:center; gap:8px; padding-bottom:11px; }
       .lobby-header-right { flex-wrap:wrap; justify-content:flex-end; gap:6px; }
-      .lobby-header-account { min-height:32px; padding:5px 9px; font-size:.68rem; }
       .lobby-online-dot { display:none !important; }
-      .lobby-current-player { padding:3px 7px 3px 3px; }
-      .lobby-current-copy strong { max-width:105px; font-size:.68rem; }
-      .lobby-current-copy small { font-size:.56rem; }
+      .lobby-current-player { width:34px; height:34px; flex:0 0 34px; padding:3px; justify-content:center; border-radius:50%; }
+      .lobby-current-avatar { width:26px; height:26px; flex:0 0 26px; }
+      .lobby-current-copy { display:none; }
 
       .lobby-hero { display:flex !important; align-items:center; gap:10px; padding:17px 0 14px !important; }
       .lobby-hero-copy { min-width:0; }
@@ -1885,10 +1873,9 @@
       /* Restore the sidebar: this contains the profile/login and quick rules drawers. */
       .lobby-side-column { display:flex !important; flex-direction:column; gap:10px; margin-top:11px; }
       .lobby-side-card { display:grid; padding:12px; }
-      .profile-drawer,.lobby-rules-drawer { display:block !important; margin-top:0; border-radius:12px; }
-      .profile-drawer summary,.lobby-rules-drawer summary { padding:11px 12px; gap:9px; }
-      .profile-drawer summary strong,.lobby-rules-drawer summary strong { font-size:.73rem; }
-      .profile-drawer summary small,.lobby-rules-drawer summary small { font-size:.62rem; }
+      .lobby-rules-drawer summary { padding:11px 12px; gap:9px; }
+      .lobby-rules-drawer summary strong { font-size:.73rem; }
+      .lobby-rules-drawer summary small { font-size:.62rem; }
       .profile-hub { padding:11px !important; }
       .profile-overview { gap:9px; padding:9px; }
       .profile-large-avatar { width:46px; height:46px; flex-basis:46px; font-size:24px; }
@@ -1909,10 +1896,9 @@
       .board-topbar { min-height:48px; gap:5px; padding:5px 7px; }
       .title-badge { font-size:.72rem; }
       .title-badge .game-credit-inline { display:none; }
-      .profile-chip { width:auto !important; min-width:76px; height:32px; flex:0 0 auto; padding:2px 7px 2px 3px !important; border-radius:999px !important; gap:5px; }
-      .profile-chip-avatar { width:24px; height:24px; flex:0 0 24px; }
-      .profile-chip-copy { display:none !important; }
-      .profile-chip-mobile-label { display:inline !important; color:#dff7ff; font-size:.61rem; font-weight:850; white-space:nowrap; }
+      .profile-chip { width:32px !important; min-width:32px; height:32px; flex:0 0 32px; padding:2px !important; justify-content:center; border-radius:50% !important; gap:0; }
+      .profile-chip-avatar { width:26px; height:26px; flex:0 0 26px; }
+      .profile-chip-copy,.profile-chip-mobile-label { display:none !important; }
       #btnCenterOrigin { display:inline-grid !important; place-items:center; width:32px; min-width:32px; height:32px; min-height:32px; padding:0; font-size:0; }
       #btnCenterOrigin::before { content:'◎'; font-size:18px; }
       .reward-reveal-btn { width:auto !important; min-width:43px; height:32px; min-height:32px; overflow:visible; padding:0 6px; font-size:.61rem !important; }
@@ -1938,7 +1924,6 @@
 
     @media (max-width: 390px) {
       .lobby-shell { padding-left:9px !important; padding-right:9px !important; }
-      .lobby-header-account { padding:5px 7px; font-size:.63rem; }
       .lobby-hero { gap:6px; }
       .lobby-hero-art { width:62px; height:70px; flex-basis:62px; }
       .lobby-feature-pills span { font-size:.53rem; padding:4px 5px; }
@@ -1958,7 +1943,7 @@
   <section class="board-section" data-matrix-ref="427948314b345255">
     <div class="board-topbar">
       <div class="title-badge">
-        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.1</small></span>
+        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.2</small></span>
         <span class="tag" id="axisModeTag">Hệ trục [-29:29]</span>
         <span class="tag-online hidden" id="onlineBadge">Online • Phòng: ---</span>
         <span class="game-credit game-credit-inline" style="margin:0 0 0 8px;">H1K4RU · HUD REXBI</span>
@@ -2078,12 +2063,11 @@
         </div>
         <div class="lobby-header-right">
           <a class="lobby-home-link" href="index.html" aria-label="Thoát về Boardgame Hub">⌂ <span>Boardgame Hub</span></a>
-          <button type="button" class="lobby-header-account" id="btnLobbyHeaderAccount" aria-label="Đăng nhập hoặc tạo tài khoản">👤 <span>Tài khoản</span></button>
           <span class="lobby-online-dot"><i></i> SẴN SÀNG</span>
-          <div class="lobby-current-player">
+          <button type="button" class="lobby-current-player lobby-account-trigger" id="btnLobbyHeaderAccount" title="Nhấn để đăng nhập, tạo tài khoản hoặc quản lý hồ sơ" aria-label="Mở tài khoản người chơi">
             <span class="lobby-current-avatar" id="lobbyIdentityAvatar">🎮</span>
             <span class="lobby-current-copy"><strong id="lobbyIdentityName">Người chơi</strong><small id="lobbyIdentityLevel">Khách · Chơi nhanh</small></span>
-          </div>
+          </button>
         </div>
       </header>
 
@@ -2206,24 +2190,6 @@
             <div class="random-preview"><span>PLAYER 1</span><b>VS</b><span>PLAYER 2</span></div>
           </section>
 
-          <details class="profile-drawer">
-            <summary><span class="drawer-icon">♙</span><span><strong>Hồ sơ & cấp độ</strong><small>Tạo nick để lưu XP và thành tích</small></span><b class="drawer-arrow">⌄</b></summary>
-            <section class="profile-hub" aria-labelledby="profileHubTitle">
-              <div class="profile-hub-heading"><div><h2 id="profileHubTitle">Hồ sơ người chơi</h2><p id="identityNote">Đăng nhập để lưu cấp độ trên mọi thiết bị.</p></div><span class="local-save-tag" id="cloudStatusTag">CLOUD</span></div>
-              <div class="profile-overview">
-                <div class="profile-large-avatar" id="profileAvatarPreview">🎮</div>
-                <div class="profile-overview-copy"><strong id="profileDisplayName">Khách chơi</strong><span id="profileDisplayLevel">Chưa đăng nhập</span><div class="profile-xp-track"><span id="profileXpBar"></span></div><small id="profileXpText">Đăng nhập để lưu XP và thành tích</small></div>
-              </div>
-              <div class="profile-stats hidden" id="profileStats">
-                <div><strong id="profileGames">0</strong><span>Trận</span></div><div><strong id="profileWins">0</strong><span>Thắng</span></div><div><strong id="profileXp">0</strong><span>XP</span></div>
-                <div class="rank-stat"><strong id="profileElo">1000</strong><span>ELO</span></div><div class="rank-stat"><strong id="profileRank">Đồng</strong><span>Hạng</span></div><div class="rank-stat"><strong id="profileRankedGames">0</strong><span>Trận rank</span></div>
-              </div>
-              <div class="rank-unlocks" id="rankUnlocks">🔒 Thử thách: 1200 ELO · Chuyên gia: 1600 ELO · Huyền thoại: 2000 ELO</div>
-              <div class="profile-actions"><button type="button" class="btn-start" id="btnOpenAccountLobby">Đăng nhập / Tạo tài khoản</button><span class="profile-save-status" id="profileSaveStatus" aria-live="polite"></span></div>
-              <p class="profile-local-note">Tài khoản dùng email + mật khẩu. Tiến trình đồng bộ trên các thiết bị sau khi cấu hình dịch vụ cloud.</p>
-            </section>
-          </details>
-
           <details class="lobby-rules-drawer">
             <summary><span class="drawer-icon">☷</span><span><strong>Luật chơi nhanh</strong><small>Xem cách chiến thắng</small></span><b class="drawer-arrow">⌄</b></summary>
             <div class="rules-box"><ul>
@@ -2246,6 +2212,18 @@
         <div><span class="account-kicker">PLAYER ACCOUNT · CLOUD SAVE</span><h2 id="accountModalTitle">Tài khoản người chơi</h2><p>Đăng nhập để mang nick, avatar và cấp độ sang thiết bị khác.</p></div>
         <button type="button" class="account-close" id="btnCloseAccount" aria-label="Đóng">×</button>
       </header>
+      <section class="account-profile-summary hidden" id="accountProfileSummary" aria-label="Tổng quan hồ sơ người chơi">
+        <div class="profile-hub-heading"><div><h2>Tổng quan tài khoản</h2><p id="identityNote">Hồ sơ được đồng bộ trên cloud.</p></div><span class="local-save-tag" id="cloudStatusTag">SYNC ON</span></div>
+        <div class="profile-overview">
+          <div class="profile-large-avatar" id="profileAvatarPreview">🎮</div>
+          <div class="profile-overview-copy"><strong id="profileDisplayName">Người chơi</strong><span id="profileDisplayLevel">Cấp độ 1</span><div class="profile-xp-track"><span id="profileXpBar"></span></div><small id="profileXpText">0/100 XP đến cấp tiếp theo</small></div>
+        </div>
+        <div class="profile-stats hidden" id="profileStats">
+          <div><strong id="profileGames">0</strong><span>Trận</span></div><div><strong id="profileWins">0</strong><span>Thắng</span></div><div><strong id="profileXp">0</strong><span>XP</span></div>
+          <div class="rank-stat"><strong id="profileElo">1000</strong><span>ELO</span></div><div class="rank-stat"><strong id="profileRank">Đồng</strong><span>Hạng</span></div><div class="rank-stat"><strong id="profileRankedGames">0</strong><span>Trận rank</span></div>
+        </div>
+        <div class="rank-unlocks" id="rankUnlocks">🔒 Thử thách: 1200 ELO · Chuyên gia: 1600 ELO · Huyền thoại: 2000 ELO</div>
+      </section>
       <div class="account-tabs" id="accountAuthTabs">
         <button type="button" class="active" id="authTabLogin">Đăng nhập</button>
         <button type="button" id="authTabSignup">Tạo tài khoản</button>
@@ -2261,6 +2239,7 @@
         </div>
         <button type="button" class="account-submit" id="btnAuthSubmit">Đăng nhập</button>
         <button type="button" class="account-submit hidden" id="btnSaveProfile">Lưu thay đổi hồ sơ</button>
+        <span class="profile-save-status account-profile-save-status" id="profileSaveStatus" aria-live="polite"></span>
         <div class="account-secondary-actions"><button type="button" class="account-link" id="btnAuthForgot">Quên mật khẩu?</button><button type="button" class="account-link hidden" id="btnAuthLogout">Đăng xuất</button><button type="button" class="account-link" id="btnAuthGuest">Tiếp tục chơi khách</button></div>
         <p class="account-status" id="accountStatus" role="status" aria-live="polite">Tài khoản cần kết nối Supabase để đồng bộ qua Internet.</p>
       </div>
@@ -2361,7 +2340,7 @@
       const profileSaveStatus = document.getElementById('profileSaveStatus');
       const accountModal = document.getElementById('accountModal');
       const btnOpenAccount = document.getElementById('btnOpenAccount');
-      const btnOpenAccountLobby = document.getElementById('btnOpenAccountLobby');
+      const accountProfileSummary = document.getElementById('accountProfileSummary');
       const btnLobbyHeaderAccount = document.getElementById('btnLobbyHeaderAccount');
       const btnOpenAdmin = document.getElementById('btnOpenAdmin');
       const adminSettingsModal = document.getElementById('adminSettingsModal');
@@ -2747,6 +2726,7 @@
       function renderAccountState() {
         const signedIn = !!authUser && !!localProfile;
         const recovery = authMode === 'recovery' && !signedIn;
+        accountProfileSummary.classList.toggle('hidden', !signedIn);
         authTabs.classList.toggle('hidden', signedIn || recovery);
         authEmailInput.closest('.account-field').classList.toggle('hidden', signedIn || recovery);
         authPasswordInput.closest('.account-field').classList.toggle('hidden', signedIn);
@@ -2827,7 +2807,6 @@
           stats.classList.remove('hidden');
           identityNote.textContent = 'Tài khoản đã liên kết cloud. Đăng nhập email này trên thiết bị khác để đồng bộ tiến trình.';
           cloudStatusTag.textContent = 'SYNC ON';
-          btnOpenAccountLobby.textContent = 'Quản lý tài khoản';
         } else {
           displayName.textContent = 'Khách chơi';
           displayLevel.textContent = 'Chưa đăng nhập';
@@ -2841,7 +2820,6 @@
           stats.classList.add('hidden');
           identityNote.textContent = 'Chơi khách không cần đăng ký. Đăng nhập để lưu cấp độ và dùng nick trên thiết bị khác.';
           cloudStatusTag.textContent = 'GUEST';
-          btnOpenAccountLobby.textContent = 'Đăng nhập / Tạo tài khoản';
         }
       }
 
@@ -3082,7 +3060,6 @@
       btnAuthForgot.addEventListener('click', handlePasswordReset);
       btnAuthGuest.addEventListener('click', closeAccountModal);
       btnOpenAccount.addEventListener('click', openAccountModal);
-      btnOpenAccountLobby.addEventListener('click', openAccountModal);
       if (btnLobbyHeaderAccount) btnLobbyHeaderAccount.addEventListener('click', openAccountModal);
       if (window.matchMedia && window.matchMedia('(max-width: 640px)').matches) {
         const mobileRulesDrawer = document.querySelector('.lobby-rules-drawer');
