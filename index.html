@@ -1,274 +1,430 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Portal - Boardgame Hub</title>
-    
-    <link rel="icon" type="image/jpeg" href="luckyrex.png">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#071426">
+  <meta name="description" content="Boardgame Hub - Sảnh trò chơi trực tuyến. Chọn game và bắt đầu trận đấu.">
+  <title>Boardgame Hub – Game Lobby</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #071426;
+      --panel: rgba(17, 37, 61, .78);
+      --panel-strong: #10243d;
+      --line: rgba(143, 186, 220, .15);
+      --text: #edf7ff;
+      --muted: #91a9c2;
+      --cyan: #54d4ed;
+      --mint: #4adeb5;
+      --radius: 22px;
+    }
 
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
-        
-        :root {
-            --gold: #f59e0b; 
-            --gold-light: #fbbf24;
-            --dark: #0f172a; 
-            --glass-bg: rgba(30, 41, 59, 0.4);
-            --glass-border: rgba(255, 255, 255, 0.08);
-        }
-        
-        * {
-            box-sizing: border-box; 
-            margin: 0;
-            padding: 0;
-        }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: var(--bg); }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      overflow-x: hidden;
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(ellipse at 12% 4%, rgba(14, 165, 233, .15), transparent 32rem),
+        radial-gradient(ellipse at 90% 76%, rgba(20, 184, 166, .12), transparent 34rem),
+        linear-gradient(145deg, #071426 0%, #0a1b30 48%, #071426 100%);
+    }
 
-        body {
-            font-family: 'Montserrat', sans-serif; 
-            background-color: var(--dark);
-            color: #f8fafc; 
-            min-height: 100vh;
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center;
-            overflow-x: hidden;
-            position: relative;
-        }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .20;
+      background-image: linear-gradient(rgba(148, 190, 222, .075) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(148, 190, 222, .075) 1px, transparent 1px);
+      background-size: 42px 42px;
+      mask-image: linear-gradient(to bottom, black, transparent 88%);
+    }
 
-        /* --- BACKGROUND EFFECTS --- */
-        body::before, body::after {
-            content: '';
-            position: absolute;
-            width: 50vw;
-            height: 50vw;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
-            z-index: -1;
-            animation: floating 10s infinite ease-in-out alternate;
-        }
-        body::after {
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(15, 23, 42, 0) 70%);
-            top: auto;
-            bottom: -10%;
-            left: -10%;
-            animation-delay: -5s;
-        }
-        @keyframes floating {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(10%, 15%); }
-        }
+    a { color: inherit; }
+    .page-shell {
+      position: relative;
+      z-index: 1;
+      width: min(1160px, 100% - 40px);
+      margin: 0 auto;
+      padding: 24px 0 38px;
+    }
 
-        .container { 
-            width: 100%; 
-            max-width: 1000px; 
-            text-align: center; 
-            padding: 40px 20px; 
-            position: relative;
-            z-index: 1;
-        }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 15px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: rgba(7, 20, 38, .58);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, .14);
+      backdrop-filter: blur(16px);
+    }
+    .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 13px;
+      color: #062033;
+      font-size: 13px;
+      font-weight: 1000;
+      letter-spacing: -.08em;
+      background: linear-gradient(145deg, #67e8f9, #38bdf8 55%, #4adeb5);
+      box-shadow: 0 7px 22px rgba(56, 189, 248, .2);
+    }
+    .brand-copy { display: grid; gap: 3px; }
+    .brand-copy strong { font-size: .83rem; letter-spacing: .14em; }
+    .brand-copy span { color: #6f91b4; font-size: .59rem; font-weight: 800; letter-spacing: .19em; }
+    .hub-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 11px;
+      border: 1px solid rgba(74, 222, 181, .2);
+      border-radius: 999px;
+      color: #9cebd3;
+      background: rgba(16, 185, 129, .07);
+      font-size: .65rem;
+      font-weight: 850;
+      letter-spacing: .11em;
+      white-space: nowrap;
+    }
+    .hub-status::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--mint);
+      box-shadow: 0 0 12px rgba(74, 222, 181, .8);
+    }
 
-        /* --- TYPOGRAPHY --- */
-        h1 { 
-            font-size: 3.5rem; 
-            margin-bottom: 0.5rem; 
-            background: linear-gradient(to right, var(--gold-light), var(--gold), #ea580c);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            filter: drop-shadow(0 0 15px rgba(245, 158, 11, 0.4));
-        }
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 28px;
+      padding: clamp(34px, 6vw, 64px) 5px 32px;
+    }
+    .hero-copy { max-width: 720px; }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--cyan);
+      font-size: .66rem;
+      font-weight: 900;
+      letter-spacing: .2em;
+    }
+    .eyebrow::before { content: ""; width: 22px; height: 1px; background: var(--cyan); }
+    h1 {
+      margin: 12px 0 12px;
+      font-size: clamp(2.2rem, 6vw, 4.25rem);
+      line-height: .98;
+      letter-spacing: -.065em;
+      font-weight: 950;
+    }
+    h1 span {
+      color: transparent;
+      background: linear-gradient(95deg, #67e8f9, #38bdf8 48%, #5eead4);
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+    .hero-copy p {
+      max-width: 610px;
+      margin: 0;
+      color: var(--muted);
+      font-size: .93rem;
+      line-height: 1.7;
+    }
+    .hero-art {
+      display: grid;
+      place-items: center;
+      position: relative;
+      width: 192px;
+      height: 146px;
+      flex: 0 0 192px;
+      border: 1px solid rgba(85, 185, 220, .17);
+      border-radius: 25px;
+      background: radial-gradient(circle, rgba(14, 165, 233, .16), rgba(15, 23, 42, .1) 68%);
+      overflow: hidden;
+    }
+    .hero-art::before, .hero-art::after {
+      content: "";
+      position: absolute;
+      width: 72px;
+      height: 72px;
+      border: 5px solid rgba(56, 189, 248, .78);
+      border-radius: 50%;
+      transform: translate(24px, 11px);
+      box-shadow: 0 0 28px rgba(56, 189, 248, .12);
+    }
+    .hero-art::after {
+      width: 65px;
+      height: 65px;
+      border: 0;
+      border-radius: 0;
+      transform: translate(-29px, -13px) rotate(45deg);
+      background: linear-gradient(135deg, transparent 44%, rgba(94, 234, 212, .86) 45%, rgba(94, 234, 212, .86) 53%, transparent 54%),
+                  linear-gradient(45deg, transparent 44%, rgba(94, 234, 212, .86) 45%, rgba(94, 234, 212, .86) 53%, transparent 54%);
+    }
 
-        .subtitle {
-            color: #94a3b8;
-            font-size: 1.1rem;
-            margin-bottom: 30px;
-            letter-spacing: 1px;
-        }
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      margin: 8px 4px 15px;
+    }
+    .section-heading h2 { margin: 0; font-size: 1.05rem; letter-spacing: -.02em; }
+    .section-heading p { margin: 5px 0 0; color: #7893ae; font-size: .72rem; }
+    .section-count { color: #7893ae; font-size: .67rem; font-weight: 800; letter-spacing: .12em; white-space: nowrap; }
 
-        /* --- GRID & CARDS --- */
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); 
-            gap: 30px; 
-            margin-top: 40px; 
-        }
+    .game-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+    }
+    .game-card {
+      --accent: #38bdf8;
+      --accent-rgb: 56, 189, 248;
+      position: relative;
+      display: flex;
+      min-height: 222px;
+      flex-direction: column;
+      align-items: stretch;
+      padding: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(135, 180, 214, .17);
+      border-radius: var(--radius);
+      color: var(--text);
+      text-decoration: none;
+      background: linear-gradient(145deg, rgba(20, 43, 69, .88), rgba(9, 25, 45, .94));
+      box-shadow: 0 12px 32px rgba(0, 0, 0, .16);
+      transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease, background .22s ease;
+      animation: card-in .55s both;
+    }
+    .game-card:nth-child(2) { animation-delay: .06s; }
+    .game-card:nth-child(3) { animation-delay: .12s; }
+    .game-card:nth-child(4) { animation-delay: .18s; }
+    @keyframes card-in { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: translateY(0); } }
+    .game-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      opacity: .5;
+      pointer-events: none;
+      background: radial-gradient(circle at 100% 0, rgba(var(--accent-rgb), .16), transparent 56%);
+    }
+    .game-card:hover, .game-card:focus-visible {
+      transform: translateY(-5px);
+      border-color: rgba(var(--accent-rgb), .58);
+      box-shadow: 0 18px 38px rgba(0, 0, 0, .25), 0 0 25px rgba(var(--accent-rgb), .09);
+      outline: none;
+    }
+    .game-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    .card-top, .card-title-row, .card-bottom { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .game-icon {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      border: 1px solid rgba(var(--accent-rgb), .24);
+      border-radius: 15px;
+      color: var(--accent);
+      background: rgba(var(--accent-rgb), .1);
+      font-size: 27px;
+      filter: drop-shadow(0 4px 13px rgba(var(--accent-rgb), .14));
+    }
+    .game-tag {
+      padding: 6px 9px;
+      border: 1px solid rgba(var(--accent-rgb), .24);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(var(--accent-rgb), .08);
+      font-size: .57rem;
+      font-weight: 900;
+      letter-spacing: .12em;
+      white-space: nowrap;
+    }
+    .card-copy { position: relative; z-index: 1; margin: 17px 0 18px; }
+    .card-copy h3 { margin: 0 0 7px; font-size: clamp(1rem, 2vw, 1.18rem); line-height: 1.25; letter-spacing: -.025em; }
+    .card-copy p { max-width: 500px; margin: 0; color: #9ab0c7; font-size: .78rem; line-height: 1.55; }
+    .card-bottom { margin-top: auto; padding-top: 13px; border-top: 1px solid rgba(148, 184, 214, .11); }
+    .card-meta { color: #718ba5; font-size: .64rem; font-weight: 750; letter-spacing: .08em; }
+    .play-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 12px;
+      border: 1px solid rgba(var(--accent-rgb), .42);
+      border-radius: 9px;
+      color: #eaf8ff;
+      background: rgba(var(--accent-rgb), .1);
+      font-size: .67rem;
+      font-weight: 900;
+      letter-spacing: .09em;
+      transition: background .2s ease, color .2s ease;
+    }
+    .play-link span { font-size: 1rem; line-height: .8; }
+    .game-card:hover .play-link, .game-card:focus-visible .play-link { color: #062033; background: var(--accent); }
 
-        .card {
-            background: var(--glass-bg); 
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--glass-border); 
-            border-radius: 24px;
-            padding: 40px 30px; 
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            cursor: pointer; 
-            text-decoration: none; 
-            color: white;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-            overflow: hidden;
-            /* Animation xuất hiện */
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 0.6s forwards;
-        }
+    .game-card.invisixo { --accent: #5eead4; --accent-rgb: 94, 234, 212; }
+    .game-card.avalon { --accent: #fb7185; --accent-rgb: 251, 113, 133; }
+    .game-card.nim { --accent: #60a5fa; --accent-rgb: 96, 165, 250; }
+    .game-card.count { --accent: #a3e635; --accent-rgb: 163, 230, 53; }
+    .new-tag { display: inline-flex; align-items: center; gap: 5px; }
+    .new-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 9px currentColor; }
 
-        /* Stagger animation delay cho từng thẻ */
-        .card:nth-child(1) { animation-delay: 0.1s; }
-        .card:nth-child(2) { animation-delay: 0.2s; }
-        .card:nth-child(3) { animation-delay: 0.3s; }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 22px 4px 0;
+      color: #607b97;
+      font-size: .65rem;
+    }
+    footer strong { color: #8ca8c3; font-weight: 800; letter-spacing: .08em; }
 
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Gradient phủ lên thẻ khi hover */
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at center, var(--accent) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        .card:hover { 
-            transform: translateY(-12px); 
-            border-color: var(--accent); 
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px var(--accent-glow); 
-        }
-
-        .card:hover::before {
-            opacity: 0.15;
-        }
-
-        .card > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        .icon { 
-            font-size: 60px; 
-            margin-bottom: 20px; 
-            transition: transform 0.3s ease;
-            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.3));
-        }
-
-        .card:hover .icon {
-            transform: scale(1.15) rotate(5deg);
-        }
-
-        h2 { 
-            margin: 10px 0; 
-            font-size: 1.4rem;
-            font-weight: 800; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-            color: var(--accent);
-        }
-
-        .desc {
-            font-size: 0.95rem; 
-            color: #cbd5e1;
-            line-height: 1.5;
-            margin-bottom: 25px;
-            flex-grow: 1;
-        }
-
-        /* --- BUTTONS --- */
-        .btn {
-            display: inline-block; 
-            margin-top: auto; 
-            padding: 12px 35px;
-            background: transparent; 
-            color: white; 
-            border: 2px solid var(--accent);
-            border-radius: 50px;
-            font-weight: bold; 
-            text-transform: uppercase; 
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            box-shadow: 0 0 10px transparent;
-        }
-
-        .card:hover .btn {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 0 15px var(--accent-glow);
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-
-        /* --- TÙY CHỈNH MÀU SẮC TỪNG THẺ --- */
-        .card-avalon {
-            --accent: #ef4444; /* Đỏ */
-            --accent-glow: rgba(239, 68, 68, 0.4);
-        }
-        .card-nim {
-            --accent: #3b82f6; /* Xanh dương */
-            --accent-glow: rgba(59, 130, 246, 0.4);
-        }
-        .card-count {
-            --accent: #10b981; /* Xanh lá */
-            --accent-glow: rgba(16, 185, 129, 0.4);
-        }
-
-        /* --- MOBILE RESPONSIVE --- */
-        @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; }
-            .grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-        }
-
-        @media (max-width: 480px) {
-            .container { padding: 30px 15px; }
-            h1 { font-size: 2rem; }
-            .subtitle { font-size: 0.95rem; }
-            .grid { grid-template-columns: 1fr; }
-            .card { padding: 30px 20px; }
-            .icon { font-size: 50px; }
-            h2 { font-size: 1.25rem; }
-            .btn { padding: 10px 30px; font-size: 0.85rem; }
-        }
-    </style>
+    @media (max-width: 700px) {
+      .page-shell { width: min(100% - 28px, 560px); padding-top: 14px; }
+      .hero { padding: 38px 3px 25px; }
+      .hero-art { width: 126px; height: 112px; flex-basis: 126px; border-radius: 19px; }
+      .hero-art::before { width: 48px; height: 48px; border-width: 4px; transform: translate(17px, 8px); }
+      .hero-art::after { width: 45px; height: 45px; transform: translate(-19px, -9px) rotate(45deg); }
+      .game-card { min-height: 215px; padding: 17px; }
+    }
+    @media (max-width: 520px) {
+      .page-shell { width: calc(100% - 24px); padding-bottom: 24px; }
+      .topbar { padding: 9px 10px; }
+      .brand-mark { width: 37px; height: 37px; flex-basis: 37px; border-radius: 11px; }
+      .brand-copy strong { font-size: .7rem; }
+      .brand-copy span { font-size: .52rem; }
+      .hub-status { padding: 7px 8px; font-size: .53rem; }
+      .hero { padding: 34px 2px 24px; }
+      .hero-art { display: none; }
+      h1 { font-size: clamp(2.25rem, 11vw, 3.2rem); }
+      .hero-copy p { font-size: .83rem; }
+      .section-heading { align-items: start; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+      .game-grid { grid-template-columns: 1fr; gap: 11px; }
+      .game-card { min-height: 190px; padding: 16px; border-radius: 18px; }
+      .card-copy { margin: 13px 0 14px; }
+      .game-icon { width: 46px; height: 46px; border-radius: 13px; font-size: 24px; }
+      footer { flex-direction: column; gap: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>BOARDGAME HUB</h1>
-        <p class="subtitle">Hệ thống trò chơi trực tuyến</p>
-        
-        <div class="grid">
-            <a href="avalon.html" class="card card-avalon">
-                <div class="icon">🏰</div>
-                <h2>SUY LUẬN</h2>
-                <p class="desc">Trò chơi ẩn vai trò phe Thiện & Ác. Liệu bạn có tìm ra sự thật?</p>
-                <div class="btn">Vào Sảnh</div>
-            </a>
-            
-            <a href="nim.html" class="card card-nim">
-                <div class="icon">🔵</div>
-                <h2>CHIẾN THUẬT</h2>
-                <p class="desc">Tính toán toán học - Kẻ lấy viên bi cuối cùng là kẻ thua cuộc.</p>
-                <div class="btn">Thách Đấu</div>
-            </a>
-
-            <a href="count.html" class="card card-count">
-                <div class="icon">🎯</div>
-                <h2>ĐẾM SỐ CHIẾN LƯỢC</h2>
-                <p class="desc">Trò chơi đếm số - Ai đạt đến số mục tiêu trước người đó sẽ giành chiến thắng!</p>
-                <div class="btn">Chơi Ngay</div>
-            </a>
+  <main class="page-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Boardgame Hub">
+        <div class="brand-mark">BG</div>
+        <div class="brand-copy">
+          <strong>BOARDGAME HUB</strong>
+          <span>PLAY · THINK · CONNECT</span>
         </div>
-    </div>
+      </div>
+      <div class="hub-status">GAME LOBBY <span>· 4 GAMES</span></div>
+    </header>
+
+    <section class="hero" aria-labelledby="page-title">
+      <div class="hero-copy">
+        <div class="eyebrow">YOUR NEXT MATCH STARTS HERE</div>
+        <h1 id="page-title">Chọn game.<br><span>Vào trận.</span></h1>
+        <p>Sảnh trò chơi trực tuyến dành cho những màn đấu trí cùng bạn bè. Chọn một tựa game bên dưới và bắt đầu cuộc chơi.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true"></div>
+    </section>
+
+    <section aria-labelledby="games-heading">
+      <div class="section-heading">
+        <div>
+          <h2 id="games-heading">Danh sách trò chơi</h2>
+          <p>Chọn trò chơi bạn muốn tham gia</p>
+        </div>
+        <div class="section-count">04 TITLES AVAILABLE</div>
+      </div>
+
+      <div class="game-grid">
+        <a class="game-card invisixo" href="InvisiXO_v1.02.html" aria-label="Chơi Invisible Tic Tac Toe">
+          <div class="card-top">
+            <div class="game-icon" aria-hidden="true">✕◯</div>
+            <div class="game-tag new-tag">NEW GAME</div>
+          </div>
+          <div class="card-copy">
+            <h3>Invisible Tic Tac Toe</h3>
+            <p>Đấu trí trên hệ trục tọa độ, ghi nhớ từng nước đi và tìm cách tạo 5 quân liên tiếp mà không để lộ chiến thuật.</p>
+          </div>
+          <div class="card-bottom">
+            <span class="card-meta">XO · MULTIPLAYER</span>
+            <span class="play-link">CHƠI NGAY <span>↗</span></span>
+          </div>
+        </a>
+
+        <a class="game-card avalon" href="avalon.html" aria-label="Vào sảnh trò chơi Suy luận Avalon">
+          <div class="card-top">
+            <div class="game-icon" aria-hidden="true">🏰</div>
+            <div class="game-tag">SOCIAL DEDUCTION</div>
+          </div>
+          <div class="card-copy">
+            <h3>Suy luận · Avalon</h3>
+            <p>Trò chơi ẩn vai trò giữa phe Thiện và phe Ác. Quan sát, thuyết phục và tìm ra sự thật.</p>
+          </div>
+          <div class="card-bottom">
+            <span class="card-meta">TEAM · STRATEGY</span>
+            <span class="play-link">VÀO SẢNH <span>↗</span></span>
+          </div>
+        </a>
+
+        <a class="game-card nim" href="nim.html" aria-label="Chơi game chiến thuật Nim">
+          <div class="card-top">
+            <div class="game-icon" aria-hidden="true">🔵</div>
+            <div class="game-tag">MATH STRATEGY</div>
+          </div>
+          <div class="card-copy">
+            <h3>Chiến thuật · Nim</h3>
+            <p>Tính toán từng lượt lấy viên bi. Người lấy viên bi cuối cùng sẽ là người thua cuộc.</p>
+          </div>
+          <div class="card-bottom">
+            <span class="card-meta">LOGIC · TACTICS</span>
+            <span class="play-link">THÁCH ĐẤU <span>↗</span></span>
+          </div>
+        </a>
+
+        <a class="game-card count" href="count.html" aria-label="Chơi game Đếm số chiến lược">
+          <div class="card-top">
+            <div class="game-icon" aria-hidden="true">🎯</div>
+            <div class="game-tag">NUMBER CHALLENGE</div>
+          </div>
+          <div class="card-copy">
+            <h3>Đếm số chiến lược</h3>
+            <p>Canh tính từng con số và tìm chiến thuật để chạm đến mục tiêu trước đối thủ.</p>
+          </div>
+          <div class="card-bottom">
+            <span class="card-meta">NUMBER · DUEL</span>
+            <span class="play-link">CHƠI NGAY <span>↗</span></span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <span><strong>BOARDGAME HUB</strong> · A place for friendly competition.</span>
+      <span>Chọn một game để bắt đầu.</span>
+    </footer>
+  </main>
 </body>
 </html>
