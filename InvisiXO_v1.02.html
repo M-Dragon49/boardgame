@@ -4,8 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="generator" content="OxyGrid-v2.4-427948314b345255" />
-  <title>Tic Tac Toe Tàng Hình</title>
+  <title>Invisible Tic Tac Toe | Boardgame Hub</title>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #0f172a;
@@ -1419,6 +1420,194 @@
       .lobby-form-grid { grid-template-columns:1fr; }
     }
 
+
+
+    /* =========================================================
+       V1.03 · MOBILE-FIRST HUD + ACCOUNT POPUP
+       ========================================================= */
+    .profile-chip { cursor:pointer; font:inherit; text-align:left; }
+    .profile-chip:hover { border-color:rgba(56,189,248,.5); box-shadow:0 0 0 3px rgba(56,189,248,.08); }
+    .local-save-tag { color:#6ee7b7; background:rgba(16,185,129,.1); border-color:rgba(52,211,153,.22); }
+    .profile-hub .profile-actions { margin-top:12px; }
+    .profile-hub .profile-actions .btn-start { min-height:40px; padding:9px 12px; font-size:.82rem; }
+
+    .account-overlay {
+      position:fixed; inset:0; z-index:120;
+      display:flex; align-items:center; justify-content:center;
+      padding:18px; overflow:auto;
+      background:rgba(2,6,23,.78);
+      backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    }
+    .account-overlay.hidden { display:none !important; }
+    .account-card {
+      width:min(460px,100%); max-height:min(90dvh,760px); overflow:auto;
+      padding:22px; border:1px solid rgba(125,211,252,.22); border-radius:22px;
+      background:radial-gradient(ellipse at 100% 0,rgba(14,165,233,.12),transparent 38%),linear-gradient(155deg,#14243a,#0a1425 78%);
+      box-shadow:0 28px 90px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .account-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:17px; }
+    .account-kicker { color:#67e8f9; font-size:.62rem; font-weight:900; letter-spacing:.17em; }
+    .account-head h2 { margin:6px 0 5px; color:#f0f9ff; font-size:1.35rem; letter-spacing:-.035em; }
+    .account-head p { color:#8ea7c2; font-size:.77rem; line-height:1.5; max-width:340px; }
+    .account-close { width:34px; height:34px; flex:0 0 34px; border:1px solid rgba(148,163,184,.22); border-radius:10px; color:#dbeafe; background:rgba(15,23,42,.7); font-size:1.35rem; line-height:1; cursor:pointer; }
+    .account-tabs { display:grid; grid-template-columns:1fr 1fr; gap:5px; padding:4px; margin-bottom:15px; border:1px solid rgba(148,163,184,.14); border-radius:12px; background:#081426; }
+    .account-tabs button { min-height:39px; border:0; border-radius:8px; color:#8ca4bf; background:transparent; font-weight:800; font-size:.8rem; cursor:pointer; }
+    .account-tabs button.active { color:#e6faff; background:linear-gradient(120deg,#0284c7,#0f766e); box-shadow:0 5px 16px rgba(14,165,233,.18); }
+    .account-form { display:flex; flex-direction:column; gap:11px; }
+    .account-field { display:flex; flex-direction:column; gap:6px; min-width:0; }
+    .account-field label { color:#91a9c4; font-size:.62rem; font-weight:900; letter-spacing:.1em; }
+    .account-field input,.account-field select { width:100%; min-width:0; min-height:43px; padding:10px 12px; border:1px solid rgba(125,158,190,.23); border-radius:10px; outline:none; color:#eff8ff; background:#071426; font:inherit; font-size:.84rem; }
+    .account-field input:focus,.account-field select:focus { border-color:#38bdf8; box-shadow:0 0 0 3px rgba(56,189,248,.1); }
+    .account-field input[type=file] { padding:8px; font-size:.72rem; }
+    .account-profile-fields { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:12px; border:1px solid rgba(56,189,248,.17); border-radius:12px; background:rgba(6,18,34,.55); }
+    .account-profile-fields.hidden { display:none; }
+    .account-avatar-upload { grid-column:1 / -1; }
+    .account-submit { width:100%; min-height:46px; border:0; border-radius:11px; color:#04251f; background:linear-gradient(120deg,#5eead4,#34d399); box-shadow:0 8px 24px rgba(16,185,129,.15); font-weight:950; font-size:.88rem; cursor:pointer; }
+    .account-submit:disabled { opacity:.55; cursor:wait; }
+    .account-submit.hidden { display:none; }
+    .account-secondary-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+    .account-link { padding:4px 0; border:0; color:#7dd3fc; background:none; font:inherit; font-size:.72rem; cursor:pointer; }
+    .account-link:hover { color:#a5f3fc; text-decoration:underline; }
+    .account-link.hidden { display:none; }
+    .account-status { min-height:18px; padding:10px 11px; border:1px solid rgba(125,211,252,.13); border-radius:9px; color:#9fb5ce; background:rgba(5,15,29,.55); font-size:.72rem; line-height:1.45; overflow-wrap:anywhere; }
+    .account-status.error { color:#fda4af; border-color:rgba(251,113,133,.22); }
+    .account-status.success { color:#86efac; border-color:rgba(52,211,153,.22); }
+    .account-foot { margin-top:14px; color:#5f7895; font-size:.62rem; line-height:1.5; text-align:center; }
+
+    @media(max-width:640px) {
+      /* The game board owns the screen; lobby/account become compact popups. */
+      .board-topbar { min-height:46px; display:flex; flex-wrap:nowrap; align-items:center; justify-content:space-between; gap:6px; padding:5px 8px; }
+      .title-badge { width:auto; min-width:0; flex:1; gap:5px; overflow:hidden; white-space:nowrap; font-size:.78rem; }
+      .title-badge > span:first-child { overflow:hidden; text-overflow:ellipsis; }
+      .title-badge span.tag { display:none; }
+      .title-badge span.tag-online { max-width:90px; overflow:hidden; text-overflow:ellipsis; font-size:.56rem; padding:3px 6px; }
+      .board-tools { width:auto; flex:0 0 auto; display:flex; flex-wrap:nowrap; align-items:center; justify-content:flex-end; gap:5px; }
+      .coord-hover { display:none; }
+      .profile-chip { width:32px; height:32px; flex:0 0 32px; padding:2px; justify-content:center; border-radius:50%; }
+      .profile-chip-avatar { width:26px; height:26px; flex-basis:26px; }
+      .profile-chip-copy { display:none; }
+      #btnCenterOrigin { width:32px; min-width:32px; height:32px; min-height:32px; padding:0; font-size:0; }
+      #btnCenterOrigin::before { content:'◎'; font-size:18px; }
+      .btn-lobby { width:32px; height:32px; min-height:32px; padding:0; display:grid; place-items:center; font-size:0; }
+      .btn-lobby::before { content:'⌂'; font-size:19px; }
+
+      .control-section { display:grid; grid-template-columns:minmax(0,1fr); gap:6px; max-height:none; overflow:visible; padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px)); }
+      .players-status { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:5px; }
+      .player-card { min-height:39px; padding:4px 6px; gap:5px; border-radius:9px; }
+      .player-avatar { width:23px; height:23px; flex-basis:23px; font-size:14px; }
+      .symbol-badge { width:23px; height:23px; flex:0 0 23px; border-radius:7px; font-size:.78rem; }
+      .player-name { font-size:.7rem; line-height:1.15; }
+      .turn-pill { margin-top:2px; font-size:.53rem; letter-spacing:0; }
+      .you-tag { font-size:.53rem; }
+      .input-area { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr) 72px; align-items:center; gap:5px; width:100%; }
+      .coord-field { min-height:38px; gap:4px; padding:3px 7px; border-radius:9px; }
+      .coord-field label { font-size:.75rem; }
+      .coord-field input { width:100%; min-width:0; min-height:29px; font-size:.88rem; }
+      .btn-play { grid-column:auto; width:100%; min-height:38px; padding:7px 8px; border-radius:9px; font-size:.78rem; }
+      .shift-hint { display:none; }
+      .status-msg { min-height:15px; display:flex; flex-direction:row; justify-content:space-between; align-items:center; gap:7px; overflow:hidden; font-size:.62rem; line-height:1.2; white-space:nowrap; }
+      .status-msg > span:first-child { overflow:hidden; text-overflow:ellipsis; }
+      .status-msg #moveCounter { flex:0 0 auto; font-size:.59rem; }
+      .room-tools { padding-top:0; align-items:center; gap:5px; }
+      .room-live-label { font-size:.61rem; }
+      .room-tool-actions { width:auto; display:flex; gap:5px; }
+      .room-tool-actions .btn-small { flex:0 0 auto; min-height:30px; padding:4px 7px; font-size:.62rem; }
+      .room-chat-panel { position:fixed; z-index:60; left:9px; right:9px; bottom:calc(91px + env(safe-area-inset-bottom,0px)); width:auto; max-height:48dvh; overflow:auto; padding:10px; box-shadow:0 18px 55px rgba(0,0,0,.55); background:rgba(10,22,39,.98); }
+      .chat-messages { max-height:26dvh; }
+
+      .gameover-banner { top:54px; width:calc(100% - 16px); padding:9px 10px; border-radius:12px; }
+      .gameover-info h2 { font-size:.88rem; }
+      .gameover-info p { font-size:.68rem; }
+      .gameover-actions { gap:6px; }
+      .btn-restart,.btn-rename { min-height:33px; padding:6px 8px; font-size:.72rem; }
+
+      /* Replace the tall full-screen lobby page with one focused modal. */
+      .lobby-overlay { align-items:center; justify-content:center; padding:12px; }
+      .lobby-shell { width:min(500px,100%); min-height:0; max-height:calc(100dvh - 24px); margin:auto; padding:15px 13px; border:1px solid rgba(100,183,223,.24); border-radius:20px; }
+      .lobby-header { padding-bottom:10px; }
+      .lobby-brand-mark { width:33px; height:33px; border-radius:9px; font-size:.82rem; }
+      .lobby-brand-copy strong { font-size:.66rem; }
+      .lobby-brand-copy span { font-size:.47rem; }
+      .lobby-online-dot { display:none; }
+      .lobby-current-player { padding:3px 7px 3px 3px; gap:5px; }
+      .lobby-current-avatar { width:25px; height:25px; font-size:15px; }
+      .lobby-current-copy strong { max-width:75px; font-size:.63rem; }
+      .lobby-current-copy small { font-size:.49rem; }
+      .lobby-hero { display:none; }
+      .lobby-layout { display:block; }
+      .lobby-main-card { padding:11px 9px; border-radius:12px; }
+      .lobby-section-head { margin-bottom:9px; }
+      .lobby-section-head h2 { margin-top:3px; font-size:.96rem; }
+      .lobby-section-head p,.lobby-live-tag { display:none; }
+      .lobby-step { font-size:.52rem; }
+      .lobby-identity-row { display:flex; flex-direction:row; align-items:center; gap:8px; padding:7px; margin-bottom:8px; }
+      .lobby-identity-label { gap:5px; }
+      .lobby-identity-label .identity-icon { display:none; }
+      .lobby-identity-label strong { font-size:.63rem; }
+      .lobby-identity-label small { display:none; }
+      .lobby-identity-fields { width:52%; gap:5px; }
+      .lobby-identity-fields input,.lobby-identity-fields select { height:34px; padding:5px 7px; font-size:.67rem; }
+      .lobby-identity-fields select { width:43px; }
+      .lobby-mode-tabs { margin-bottom:9px; padding:3px; }
+      .lobby-mode-tabs .playtype-tab { min-height:37px; gap:5px; padding:6px 4px; font-size:.66rem; }
+      .lobby-mode-tabs .playtype-tab span { font-size:.8rem; }
+      .lobby-form-grid { gap:6px; }
+      .lobby-form .form-group label,.lobby-online-panel .form-group label { font-size:.52rem; }
+      .lobby-form .form-group input,.lobby-online-panel .form-group input { height:36px; min-height:36px; padding:6px 8px; font-size:.68rem; }
+      .lobby-advanced { margin:7px 0 8px; }
+      .lobby-advanced summary { padding:7px 9px; font-size:.63rem; }
+      .lobby-primary-cta { min-height:40px; font-size:.72rem; }
+      .lobby-cta-note { margin-top:5px; font-size:.54rem; }
+      .lobby-side-column,.lobby-footer-note { display:none !important; }
+      .profile-drawer,.lobby-rules-drawer { margin-top:7px; border-radius:10px; }
+      .profile-drawer summary,.lobby-rules-drawer summary { padding:8px 9px; }
+      .profile-drawer summary strong,.lobby-rules-drawer summary strong { font-size:.66rem; }
+      .profile-drawer summary small,.lobby-rules-drawer summary small { font-size:.54rem; }
+      .profile-hub { margin:0; padding:9px; border:0; border-top:1px solid rgba(148,163,184,.12); border-radius:0; }
+      .profile-hub-heading { margin-bottom:8px; }
+      .profile-hub-heading h2 { font-size:.76rem; }
+      .profile-hub-heading p { font-size:.59rem; }
+      .profile-overview { gap:8px; padding:7px; }
+      .profile-large-avatar { width:38px; height:38px; flex-basis:38px; font-size:21px; border-radius:11px; }
+      .profile-overview-copy strong { font-size:.72rem; }
+      .profile-overview-copy > span,.profile-overview-copy small { font-size:.57rem; }
+      .profile-stats { margin:7px 0; gap:5px; }
+      .profile-stats div { padding:5px 2px; }
+      .profile-stats strong { font-size:.75rem; }.profile-stats span { font-size:.55rem; }
+      .profile-hub .profile-actions { margin-top:8px; }
+      .profile-hub .profile-actions .btn-start { min-height:35px; font-size:.68rem; }
+      .profile-local-note { margin-top:6px; font-size:.55rem; }
+
+      .account-overlay { align-items:flex-end; padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px)); }
+      .account-card { width:100%; max-height:88dvh; padding:16px 14px; border-radius:19px 19px 14px 14px; }
+      .account-head { margin-bottom:12px; }
+      .account-head h2 { font-size:1.1rem; }
+      .account-head p { font-size:.68rem; }
+      .account-tabs { margin-bottom:11px; }
+      .account-tabs button { min-height:36px; font-size:.72rem; }
+      .account-form { gap:9px; }
+      .account-field input,.account-field select { min-height:40px; padding:8px 10px; font-size:.8rem; }
+      .account-profile-fields { gap:8px; padding:9px; }
+      .account-submit { min-height:42px; font-size:.8rem; }
+      .account-foot { margin-top:10px; font-size:.57rem; }
+    }
+    @media(max-width:390px) {
+      .lobby-shell { padding:12px 10px; }
+      .lobby-main-card { padding:9px 7px; }
+      .lobby-identity-label strong { font-size:.59rem; }
+      .lobby-identity-fields { width:56%; }
+      .lobby-form-grid { grid-template-columns:1fr 1fr; }
+      .player-name { font-size:.65rem; }
+      .account-profile-fields { grid-template-columns:1fr 1fr; }
+    }
+    @media(max-height:620px) and (max-width:640px) {
+      .control-section { gap:4px; padding-top:4px; }
+      .player-card { min-height:34px; }
+      .coord-field,.btn-play { min-height:34px; }
+      .lobby-shell { max-height:calc(100dvh - 12px); padding-top:10px; padding-bottom:10px; }
+      .lobby-header { padding-bottom:7px; }
+    }
+
   </style>
 </head>
 <body>
@@ -1432,10 +1621,10 @@
         <span class="tag-online hidden" id="onlineBadge">Online • Phòng: ---</span>
       </div>
       <div class="board-tools">
-        <div class="profile-chip" id="profileChip" title="Hồ sơ người chơi">
+        <button type="button" class="profile-chip" id="btnOpenAccount" title="Tài khoản người chơi" aria-label="Mở tài khoản người chơi">
           <span class="profile-chip-avatar" id="profileChipAvatar">🎮</span>
           <span class="profile-chip-copy"><strong id="profileChipName">Khách</strong><small id="profileChipLevel">Khách chơi</small></span>
-        </div>
+        </button>
         <div class="coord-hover" id="hoverCoord">Tọa độ: (0, 0)</div>
         <button class="btn-small" id="btnCenterOrigin" title="Cuộn về tâm O(0,0)">Về tâm O(0,0)</button>
         <button class="btn-lobby" id="btnBackLobby" title="Rời trận và quay về sảnh">⌂ Về sảnh</button>
@@ -1652,22 +1841,16 @@
           <details class="profile-drawer">
             <summary><span class="drawer-icon">♙</span><span><strong>Hồ sơ & cấp độ</strong><small>Tạo nick để lưu XP và thành tích</small></span><b class="drawer-arrow">⌄</b></summary>
             <section class="profile-hub" aria-labelledby="profileHubTitle">
-              <div class="profile-hub-heading"><div><h2 id="profileHubTitle">Hồ sơ người chơi</h2><p>Tiến trình được lưu trên thiết bị này.</p></div><span class="local-save-tag">LOCAL</span></div>
+              <div class="profile-hub-heading"><div><h2 id="profileHubTitle">Hồ sơ người chơi</h2><p id="identityNote">Đăng nhập để lưu cấp độ trên mọi thiết bị.</p></div><span class="local-save-tag" id="cloudStatusTag">CLOUD</span></div>
               <div class="profile-overview">
                 <div class="profile-large-avatar" id="profileAvatarPreview">🎮</div>
-                <div class="profile-overview-copy"><strong id="profileDisplayName">Chưa tạo nick</strong><span id="profileDisplayLevel">Bạn đang chơi với tư cách khách</span><div class="profile-xp-track"><span id="profileXpBar"></span></div><small id="profileXpText">Khách chơi không tích lũy XP</small></div>
+                <div class="profile-overview-copy"><strong id="profileDisplayName">Khách chơi</strong><span id="profileDisplayLevel">Chưa đăng nhập</span><div class="profile-xp-track"><span id="profileXpBar"></span></div><small id="profileXpText">Đăng nhập để lưu XP và thành tích</small></div>
               </div>
               <div class="profile-stats hidden" id="profileStats">
                 <div><strong id="profileGames">0</strong><span>Trận</span></div><div><strong id="profileWins">0</strong><span>Thắng</span></div><div><strong id="profileXp">0</strong><span>XP</span></div>
               </div>
-              <div class="profile-editor">
-                <div class="form-group profile-name-group"><label for="profileNameInput">Tên nick</label><input type="text" id="profileNameInput" maxlength="20" placeholder="Ví dụ: GridMaster" /></div>
-                <div class="form-group profile-avatar-group"><label for="profileAvatarSelect">Avatar</label><select id="profileAvatarSelect" class="profile-select"><option value="🎮">🎮 Tay cầm</option><option value="🦊">🦊 Cáo</option><option value="🐼">🐼 Gấu trúc</option><option value="🐱">🐱 Mèo</option><option value="🐸">🐸 Ếch</option><option value="🐯">🐯 Hổ</option><option value="🐲">🐲 Rồng</option><option value="👾">👾 Alien</option><option value="🌟">🌟 Ngôi sao</option><option value="⚡">⚡ Tia chớp</option></select></div>
-                <div class="form-group profile-upload-group"><label for="profileAvatarFile">Ảnh avatar riêng (tuỳ chọn)</label><input type="file" id="profileAvatarFile" accept="image/png,image/jpeg,image/webp" /></div>
-              </div>
-              <div class="profile-actions"><button type="button" class="btn-start" id="btnSaveProfile">Tạo nick & lưu tiến trình</button><span id="profileSaveStatus" class="profile-save-status" aria-live="polite"></span></div>
-              <p class="profile-local-note">Thắng +40 XP · Thua +12 XP · Hòa +18 XP · 100 XP lên 1 cấp.</p>
-              <p class="profile-local-note" id="identityNote">Nick và tiến trình chỉ lưu ở trình duyệt này.</p>
+              <div class="profile-actions"><button type="button" class="btn-start" id="btnOpenAccountLobby">Đăng nhập / Tạo tài khoản</button><span class="profile-save-status" id="profileSaveStatus" aria-live="polite"></span></div>
+              <p class="profile-local-note">Tài khoản dùng email + mật khẩu. Tiến trình đồng bộ trên các thiết bị sau khi cấu hình dịch vụ cloud.</p>
             </section>
           </details>
 
@@ -1685,6 +1868,35 @@
       </div>
     </div>
   </div>
+  <!-- ACCOUNT POPUP: email/password auth + cloud profile -->
+  <div class="account-overlay hidden" id="accountModal" role="presentation">
+    <section class="account-card" role="dialog" aria-modal="true" aria-labelledby="accountModalTitle">
+      <header class="account-head">
+        <div><span class="account-kicker">PLAYER ACCOUNT · CLOUD SAVE</span><h2 id="accountModalTitle">Tài khoản người chơi</h2><p>Đăng nhập để mang nick, avatar và cấp độ sang thiết bị khác.</p></div>
+        <button type="button" class="account-close" id="btnCloseAccount" aria-label="Đóng">×</button>
+      </header>
+      <div class="account-tabs" id="accountAuthTabs">
+        <button type="button" class="active" id="authTabLogin">Đăng nhập</button>
+        <button type="button" id="authTabSignup">Tạo tài khoản</button>
+      </div>
+      <div class="account-form" id="accountForm">
+        <div class="account-field" id="authEmailGroup"><label for="authEmailInput">EMAIL ĐĂNG NHẬP</label><input type="email" id="authEmailInput" autocomplete="email" placeholder="ban@example.com" maxlength="254"></div>
+        <div class="account-field" id="authPasswordGroup"><label for="authPasswordInput">MẬT KHẨU</label><input type="password" id="authPasswordInput" autocomplete="current-password" placeholder="Tối thiểu 8 ký tự" minlength="8" maxlength="72"></div>
+        <div class="account-field hidden" id="authConfirmGroup"><label for="authPasswordConfirmInput">NHẬP LẠI MẬT KHẨU</label><input type="password" id="authPasswordConfirmInput" autocomplete="new-password" placeholder="Nhập lại mật khẩu" minlength="8" maxlength="72"></div>
+        <div class="account-profile-fields hidden" id="authProfileFields">
+          <div class="account-field"><label for="profileNameInput">TÊN HIỂN THỊ</label><input type="text" id="profileNameInput" maxlength="20" placeholder="Ví dụ: GridMaster" autocomplete="nickname"></div>
+          <div class="account-field"><label for="profileAvatarSelect">AVATAR</label><select id="profileAvatarSelect" class="profile-select"><option value="🎮">🎮 Tay cầm</option><option value="🦊">🦊 Cáo</option><option value="🐼">🐼 Gấu trúc</option><option value="🐱">🐱 Mèo</option><option value="🐸">🐸 Ếch</option><option value="🐯">🐯 Hổ</option><option value="🐲">🐲 Rồng</option><option value="👾">👾 Alien</option><option value="🌟">🌟 Ngôi sao</option><option value="⚡">⚡ Tia chớp</option></select></div>
+          <div class="account-field account-avatar-upload"><label for="profileAvatarFile">ẢNH AVATAR RIÊNG (KHÔNG BẮT BUỘC)</label><input type="file" id="profileAvatarFile" accept="image/png,image/jpeg,image/webp"></div>
+        </div>
+        <button type="button" class="account-submit" id="btnAuthSubmit">Đăng nhập</button>
+        <button type="button" class="account-submit hidden" id="btnSaveProfile">Lưu thay đổi hồ sơ</button>
+        <div class="account-secondary-actions"><button type="button" class="account-link" id="btnAuthForgot">Quên mật khẩu?</button><button type="button" class="account-link hidden" id="btnAuthLogout">Đăng xuất</button><button type="button" class="account-link" id="btnAuthGuest">Tiếp tục chơi khách</button></div>
+        <p class="account-status" id="accountStatus" role="status" aria-live="polite">Tài khoản cần kết nối Supabase để đồng bộ qua Internet.</p>
+      </div>
+      <footer class="account-foot">Không dùng chung mật khẩu với dịch vụ khác. Game không bao giờ yêu cầu mã xác thực của bạn.</footer>
+    </section>
+  </div>
+
   <script>
     (() => {
       // THAM SỐ NỘI BỘ LƯỚI TỌA ĐỘ
@@ -1738,6 +1950,25 @@
       const profileAvatarPreview = document.getElementById('profileAvatarPreview');
       const btnSaveProfile = document.getElementById('btnSaveProfile');
       const profileSaveStatus = document.getElementById('profileSaveStatus');
+      const accountModal = document.getElementById('accountModal');
+      const btnOpenAccount = document.getElementById('btnOpenAccount');
+      const btnOpenAccountLobby = document.getElementById('btnOpenAccountLobby');
+      const btnCloseAccount = document.getElementById('btnCloseAccount');
+      const authTabs = document.getElementById('accountAuthTabs');
+      const authTabLogin = document.getElementById('authTabLogin');
+      const authTabSignup = document.getElementById('authTabSignup');
+      const authEmailInput = document.getElementById('authEmailInput');
+      const authPasswordInput = document.getElementById('authPasswordInput');
+      const authPasswordConfirmInput = document.getElementById('authPasswordConfirmInput');
+      const authConfirmGroup = document.getElementById('authConfirmGroup');
+      const authProfileFields = document.getElementById('authProfileFields');
+      const btnAuthSubmit = document.getElementById('btnAuthSubmit');
+      const btnAuthForgot = document.getElementById('btnAuthForgot');
+      const btnAuthLogout = document.getElementById('btnAuthLogout');
+      const btnAuthGuest = document.getElementById('btnAuthGuest');
+      const accountStatus = document.getElementById('accountStatus');
+      const identityNote = document.getElementById('identityNote');
+      const cloudStatusTag = document.getElementById('cloudStatusTag');
       const lobbyQuickNameInput = document.getElementById('lobbyQuickNameInput');
       const lobbyQuickAvatarSelect = document.getElementById('lobbyQuickAvatarSelect');
 
@@ -1831,26 +2062,33 @@
       let isStartingRound = false;
       let avatars = { X: '🎮', O: '🎮' };
       let matchRewarded = false;
-      const PROFILE_STORAGE_KEY = 'ttt-tanghinh-profile-v1';
-      let localProfile = null;
+
+      // SUPABASE CLOUD ACCOUNT: chỉ dùng URL + publishable/anon key ở client.
+      // Tuyệt đối không đưa service_role key vào file HTML.
+      const SUPABASE_URL = 'YOUR_SUPABASE_PROJECT_URL';
+      const SUPABASE_PUBLISHABLE_KEY = 'YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY';
+      const supabaseConfigured = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL)
+        && SUPABASE_PUBLISHABLE_KEY.length > 30
+        && !SUPABASE_PUBLISHABLE_KEY.includes('YOUR_');
+      const supabaseClient = (supabaseConfigured && window.supabase && window.supabase.createClient)
+        ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+          }) : null;
+      let authUser = null;
+      let localProfile = null; // profile in memory; source of truth is Supabase while signed in
+      let legacyLocalProfile = null;
       try {
-        const storedProfile = JSON.parse(localStorage.getItem(PROFILE_STORAGE_KEY) || 'null');
-        if (storedProfile && typeof storedProfile.name === 'string') {
-          localProfile = {
-            name: storedProfile.name.slice(0, 20),
-            avatar: typeof storedProfile.avatar === 'string' ? storedProfile.avatar : '🎮',
-            xp: Math.max(0, Number(storedProfile.xp) || 0),
-            games: Math.max(0, Number(storedProfile.games) || 0),
-            wins: Math.max(0, Number(storedProfile.wins) || 0),
-            losses: Math.max(0, Number(storedProfile.losses) || 0),
-            draws: Math.max(0, Number(storedProfile.draws) || 0)
-          };
-        }
-      } catch (_) { localProfile = null; }
-      let sessionIdentity = localProfile
-        ? { mode: 'profile', name: localProfile.name, avatar: localProfile.avatar }
-        : { mode: 'guest', name: 'Người chơi', avatar: '🎮' };
+        const legacy = JSON.parse(localStorage.getItem('ttt-tanghinh-profile-v1') || 'null');
+        if (legacy && typeof legacy.name === 'string') legacyLocalProfile = {
+          name: legacy.name.slice(0,20), avatar: typeof legacy.avatar === 'string' ? legacy.avatar : '🎮',
+          xp: Math.max(0, Number(legacy.xp)||0), games: Math.max(0, Number(legacy.games)||0),
+          wins: Math.max(0, Number(legacy.wins)||0), losses: Math.max(0, Number(legacy.losses)||0), draws: Math.max(0, Number(legacy.draws)||0)
+        };
+      } catch (_) { legacyLocalProfile = null; }
+      let sessionIdentity = { mode: 'guest', name: 'Người chơi', avatar: '🎮' };
+      let authMode = 'login';
       let uploadedAvatarData = null;
+      let loadedCloudUserId = null;
 
       // =========================================================
       // HỒ SƠ NGƯỜI CHƠI, AVATAR VÀ TIẾN TRÌNH
@@ -1873,14 +2111,58 @@
         }
       }
 
-      function saveLocalProfile() {
-        if (!localProfile) return false;
-        try {
-          localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(localProfile));
-          return true;
-        } catch (_) {
-          profileSaveStatus.textContent = 'Không thể lưu trong trình duyệt này. Hãy thử ảnh avatar nhỏ hơn.';
-          return false;
+      function setAccountStatus(message, kind = '') {
+        accountStatus.textContent = message;
+        accountStatus.className = 'account-status' + (kind ? ` ${kind}` : '');
+      }
+
+      function openAccountModal() {
+        accountModal.classList.remove('hidden');
+        renderAccountState();
+        if (!authUser && supabaseClient) authEmailInput.focus();
+        else if (!authUser) setAccountStatus(accountSetupMessage(), '');
+      }
+      function closeAccountModal() { accountModal.classList.add('hidden'); }
+      function accountSetupMessage() {
+        return supabaseClient
+          ? 'Đăng nhập bằng email và mật khẩu. Tạo tài khoản một lần, sau đó dùng lại trên máy tính hoặc điện thoại khác.'
+          : 'Chưa cấu hình Supabase. Hãy điền URL dự án và publishable/anon key trong phần cấu hình ở đầu script, sau đó chạy game trên HTTPS hoặc localhost.';
+      }
+      function setAuthMode(mode) {
+        authMode = ['signup','recovery'].includes(mode) ? mode : 'login';
+        authTabLogin.classList.toggle('active', authMode === 'login');
+        authTabSignup.classList.toggle('active', authMode === 'signup');
+        authPasswordInput.autocomplete = authMode === 'login' ? 'current-password' : 'new-password';
+        authConfirmGroup.classList.toggle('hidden', !['signup','recovery'].includes(authMode));
+        authProfileFields.classList.toggle('hidden', authMode !== 'signup');
+        btnAuthSubmit.textContent = authMode === 'signup' ? 'TẠO TÀI KHOẢN' : (authMode === 'recovery' ? 'CẬP NHẬT MẬT KHẨU' : 'ĐĂNG NHẬP');
+        btnAuthForgot.classList.toggle('hidden', authMode !== 'login');
+        renderAccountState();
+      }
+      function renderAccountState() {
+        const signedIn = !!authUser && !!localProfile;
+        const recovery = authMode === 'recovery' && !signedIn;
+        authTabs.classList.toggle('hidden', signedIn || recovery);
+        authEmailInput.closest('.account-field').classList.toggle('hidden', signedIn || recovery);
+        authPasswordInput.closest('.account-field').classList.toggle('hidden', signedIn);
+        authConfirmGroup.classList.toggle('hidden', signedIn || !['signup','recovery'].includes(authMode));
+        authProfileFields.classList.toggle('hidden', !signedIn && authMode !== 'signup');
+        btnAuthSubmit.classList.toggle('hidden', signedIn);
+        btnSaveProfile.classList.toggle('hidden', !signedIn);
+        btnAuthLogout.classList.toggle('hidden', !signedIn);
+        btnAuthForgot.classList.toggle('hidden', signedIn || authMode !== 'login');
+        btnAuthGuest.classList.toggle('hidden', signedIn || recovery);
+        document.getElementById('accountModalTitle').textContent = signedIn ? 'Hồ sơ tài khoản' : (authMode === 'signup' ? 'Tạo tài khoản mới' : (recovery ? 'Đặt lại mật khẩu' : 'Đăng nhập'));
+        if (signedIn) {
+          profileNameInput.value = localProfile.name;
+          if (localProfile.avatar && localProfile.avatar.startsWith('data:image/')) {
+            profileAvatarSelect.value = '🎮'; uploadedAvatarData = localProfile.avatar;
+          } else if ([...profileAvatarSelect.options].some(option => option.value === localProfile.avatar)) {
+            profileAvatarSelect.value = localProfile.avatar; uploadedAvatarData = null;
+          }
+          setAccountStatus(`Đã đăng nhập: ${authUser.email || 'tài khoản'} · tiến trình lưu trên cloud.`, 'success');
+        } else if (!accountStatus.textContent) {
+          setAccountStatus(accountSetupMessage());
         }
       }
 
@@ -1902,8 +2184,11 @@
             : 'GUEST PLAYER';
         }
         if (lobbyQuickNameInput && document.activeElement !== lobbyQuickNameInput) lobbyQuickNameInput.value = sessionIdentity.name;
-        if (lobbyQuickAvatarSelect) lobbyQuickAvatarSelect.value = sessionIdentity.avatar;
+        if (lobbyQuickAvatarSelect) lobbyQuickAvatarSelect.value = (sessionIdentity.avatar && !sessionIdentity.avatar.startsWith('data:image/')) ? sessionIdentity.avatar : '🎮';
+        if (lobbyQuickNameInput) lobbyQuickNameInput.disabled = sessionIdentity.mode === 'profile';
+        if (lobbyQuickAvatarSelect) lobbyQuickAvatarSelect.disabled = sessionIdentity.mode === 'profile';
         updateProfilePanel();
+        renderAccountState();
       }
 
       function updateProfilePanel() {
@@ -1915,8 +2200,7 @@
         const winsEl = document.getElementById('profileWins');
         const xpEl = document.getElementById('profileXp');
         const stats = document.getElementById('profileStats');
-
-        if (localProfile) {
+        if (localProfile && authUser) {
           const level = levelInfo(localProfile.xp);
           displayName.textContent = localProfile.name;
           displayLevel.textContent = `Cấp độ ${level.level} · ${localProfile.xp} XP`;
@@ -1926,93 +2210,260 @@
           winsEl.textContent = localProfile.wins;
           xpEl.textContent = localProfile.xp;
           setAvatarElement(profileAvatarPreview, localProfile.avatar);
-          profileNameInput.value = localProfile.name;
-          if (localProfile.avatar.startsWith('data:image/')) {
-            profileAvatarSelect.value = '🎮';
-            uploadedAvatarData = localProfile.avatar;
-          } else if ([...profileAvatarSelect.options].some(o => o.value === localProfile.avatar)) {
-            profileAvatarSelect.value = localProfile.avatar;
-            uploadedAvatarData = null;
-          }
-          btnSaveProfile.textContent = 'Lưu nick & dùng trong trận';
+          stats.classList.remove('hidden');
+          identityNote.textContent = 'Tài khoản đã liên kết cloud. Đăng nhập email này trên thiết bị khác để đồng bộ tiến trình.';
+          cloudStatusTag.textContent = 'SYNC ON';
+          btnOpenAccountLobby.textContent = 'Quản lý tài khoản';
         } else {
-          displayName.textContent = 'Chưa tạo nick';
-          displayLevel.textContent = 'Bạn đang chơi với tư cách khách';
-          xpText.textContent = 'Khách chơi không tích lũy XP';
+          displayName.textContent = 'Khách chơi';
+          displayLevel.textContent = 'Chưa đăng nhập';
+          xpText.textContent = 'Đăng nhập để lưu XP và thành tích';
           xpBar.style.width = '0%';
-          gamesEl.textContent = '0';
-          winsEl.textContent = '0';
-          xpEl.textContent = '0';
-          setAvatarElement(profileAvatarPreview, profileAvatarSelect.value || '🎮');
-          btnSaveProfile.textContent = 'Tạo nick & lưu tiến trình';
+          gamesEl.textContent = '0'; winsEl.textContent = '0'; xpEl.textContent = '0';
+          setAvatarElement(profileAvatarPreview, sessionIdentity.avatar || '🎮');
+          stats.classList.add('hidden');
+          identityNote.textContent = 'Chơi khách không cần đăng ký. Đăng nhập để lưu cấp độ và dùng nick trên thiết bị khác.';
+          cloudStatusTag.textContent = 'GUEST';
+          btnOpenAccountLobby.textContent = 'Đăng nhập / Tạo tài khoản';
         }
-        stats.classList.toggle('hidden', !localProfile);
-        const guestMode = sessionIdentity.mode === 'guest';
-        document.getElementById('identityNote').textContent = guestMode
-          ? 'Bạn đang dùng tên tạm. Trận đấu với khách không cộng XP và không lưu thành tích.'
-          : 'Nick không có mật khẩu/máy chủ: chỉ lưu trong trình duyệt này; xóa dữ liệu có thể làm mất tiến trình.';
       }
 
-      btnSaveProfile.addEventListener('click', () => {
-        const name = profileNameInput.value.trim();
-        if (name.length < 2) {
-          profileSaveStatus.textContent = 'Tên nick cần ít nhất 2 ký tự.';
-          profileNameInput.focus();
+      function normalizeCloudProfile(row) {
+        return {
+          name: String(row.nickname || 'Player').slice(0, 20),
+          avatar: (typeof row.avatar === 'string' && row.avatar) ? row.avatar : '🎮',
+          xp: Math.max(0, Number(row.xp) || 0),
+          games: Math.max(0, Number(row.games) || 0),
+          wins: Math.max(0, Number(row.wins) || 0),
+          losses: Math.max(0, Number(row.losses) || 0),
+          draws: Math.max(0, Number(row.draws) || 0)
+        };
+      }
+
+      async function persistCloudProfile() {
+        if (!supabaseClient || !authUser || !localProfile) return false;
+        const payload = {
+          user_id: authUser.id,
+          nickname: localProfile.name,
+          avatar: String(localProfile.avatar || '🎮').slice(0, 250000),
+          xp: localProfile.xp,
+          games: localProfile.games,
+          wins: localProfile.wins,
+          losses: localProfile.losses,
+          draws: localProfile.draws,
+          updated_at: new Date().toISOString()
+        };
+        const { error } = await supabaseClient.from('ttt_profiles').upsert(payload, { onConflict: 'user_id' });
+        if (error) {
+          console.error('Cloud profile save failed:', error);
+          profileSaveStatus.textContent = 'Chưa đồng bộ được. Kiểm tra bảng ttt_profiles và chính sách RLS.';
+          return false;
+        }
+        return true;
+      }
+
+      async function loadCloudProfile(user, force = false) {
+        if (!supabaseClient || !user) return;
+        if (!force && loadedCloudUserId === user.id && localProfile) return;
+        authUser = user;
+        loadedCloudUserId = user.id;
+        setAccountStatus('Đang tải hồ sơ và tiến trình từ cloud...');
+        const { data, error } = await supabaseClient.from('ttt_profiles').select('user_id,nickname,avatar,xp,games,wins,losses,draws').eq('user_id', user.id).maybeSingle();
+        if (error) {
+          console.error('Cloud profile load failed:', error);
+          setAccountStatus('Đăng nhập thành công nhưng chưa đọc được hồ sơ. Hãy chạy file SQL cài đặt và kiểm tra RLS.', 'error');
           return;
         }
-        const avatar = uploadedAvatarData || profileAvatarSelect.value || '🎮';
-        localProfile = {
-          name: name.slice(0, 20), avatar,
-          xp: localProfile ? localProfile.xp : 0,
-          games: localProfile ? localProfile.games : 0,
-          wins: localProfile ? localProfile.wins : 0,
-          losses: localProfile ? localProfile.losses : 0,
-          draws: localProfile ? localProfile.draws : 0
-        };
+        let row = data;
+        if (!row) {
+          const meta = user.user_metadata || {};
+          row = {
+            user_id: user.id,
+            nickname: String(meta.nickname || (legacyLocalProfile && legacyLocalProfile.name) || 'Player').slice(0, 20),
+            avatar: String(meta.avatar || (legacyLocalProfile && legacyLocalProfile.avatar) || '🎮').slice(0, 250000),
+            xp: legacyLocalProfile ? legacyLocalProfile.xp : 0,
+            games: legacyLocalProfile ? legacyLocalProfile.games : 0,
+            wins: legacyLocalProfile ? legacyLocalProfile.wins : 0,
+            losses: legacyLocalProfile ? legacyLocalProfile.losses : 0,
+            draws: legacyLocalProfile ? legacyLocalProfile.draws : 0
+          };
+          const { data: inserted, error: insertError } = await supabaseClient.from('ttt_profiles').upsert(row, { onConflict: 'user_id' }).select().single();
+          if (insertError) {
+            console.error('Cloud profile create failed:', insertError);
+            setAccountStatus('Tài khoản đã đăng nhập nhưng chưa tạo được hồ sơ cloud. Hãy kiểm tra file SQL/RLS.', 'error');
+            return;
+          }
+          row = inserted;
+          if (legacyLocalProfile) {
+            try { localStorage.removeItem('ttt-tanghinh-profile-v1'); } catch (_) {}
+            legacyLocalProfile = null;
+          }
+        } else if (legacyLocalProfile && Number(row.xp) === 0 && Number(row.games) === 0) {
+          // Older versions stored progress only in this browser. Migrate it
+          // once when the newly registered cloud profile is still empty.
+          const migrated = {
+            ...row,
+            avatar: (row.avatar && row.avatar !== '🎮') ? row.avatar : legacyLocalProfile.avatar,
+            xp: legacyLocalProfile.xp,
+            games: legacyLocalProfile.games,
+            wins: legacyLocalProfile.wins,
+            losses: legacyLocalProfile.losses,
+            draws: legacyLocalProfile.draws,
+            updated_at: new Date().toISOString()
+          };
+          const { data: migratedRow, error: migrateError } = await supabaseClient.from('ttt_profiles').upsert(migrated, { onConflict: 'user_id' }).select().single();
+          if (!migrateError && migratedRow) {
+            row = migratedRow;
+            try { localStorage.removeItem('ttt-tanghinh-profile-v1'); } catch (_) {}
+            legacyLocalProfile = null;
+          }
+        }
+        localProfile = normalizeCloudProfile(row);
         sessionIdentity = { mode: 'profile', name: localProfile.name, avatar: localProfile.avatar };
-        const saved = saveLocalProfile();
-        profileSaveStatus.textContent = saved
-          ? 'Đã lưu hồ sơ trên thiết bị này.'
-          : 'Hồ sơ tạm dùng trong phiên này, nhưng chưa lưu được vào trình duyệt.';
         applySessionDefaults();
+        setAccountStatus(`Xin chào ${localProfile.name}! Hồ sơ đã đồng bộ.`, 'success');
+        profileSaveStatus.textContent = 'Đã kết nối tài khoản cloud.';
+      }
+
+      function resetToGuestAfterSignOut() {
+        authUser = null; localProfile = null; loadedCloudUserId = null;
+        sessionIdentity = { mode: 'guest', name: 'Người chơi', avatar: '🎮' };
+        applySessionDefaults();
+        setAccountStatus('Đã đăng xuất. Bạn vẫn có thể chơi nhanh với tư cách khách.');
+      }
+
+      async function handleAuthSubmit() {
+        if (!supabaseClient) {
+          setAccountStatus(accountSetupMessage(), 'error');
+          return;
+        }
+        const email = authEmailInput.value.trim().toLowerCase();
+        const password = authPasswordInput.value;
+        if (authMode === 'recovery') {
+          if (password.length < 8) { setAccountStatus('Mật khẩu mới cần ít nhất 8 ký tự.', 'error'); authPasswordInput.focus(); return; }
+          if (password !== authPasswordConfirmInput.value) { setAccountStatus('Mật khẩu nhập lại chưa khớp.', 'error'); authPasswordConfirmInput.focus(); return; }
+        } else {
+          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            setAccountStatus('Vui lòng nhập email hợp lệ.', 'error'); authEmailInput.focus(); return;
+          }
+          if (password.length < 8) {
+            setAccountStatus('Mật khẩu cần ít nhất 8 ký tự.', 'error'); authPasswordInput.focus(); return;
+          }
+        }
+        btnAuthSubmit.disabled = true;
+        btnAuthSubmit.textContent = authMode === 'signup' ? 'ĐANG TẠO TÀI KHOẢN...' : 'ĐANG ĐĂNG NHẬP...';
+        try {
+          if (authMode === 'recovery') {
+            const { error } = await supabaseClient.auth.updateUser({ password });
+            if (error) throw error;
+            authPasswordInput.value = ''; authPasswordConfirmInput.value = '';
+            setAuthMode('login');
+            setAccountStatus('Đã cập nhật mật khẩu. Bạn có thể đăng nhập lại bằng mật khẩu mới.', 'success');
+          } else if (authMode === 'signup') {
+            const nickname = profileNameInput.value.trim();
+            if (nickname.length < 2) { setAccountStatus('Tên hiển thị cần ít nhất 2 ký tự.', 'error'); profileNameInput.focus(); return; }
+            if (password !== authPasswordConfirmInput.value) { setAccountStatus('Mật khẩu nhập lại chưa khớp.', 'error'); authPasswordConfirmInput.focus(); return; }
+            const avatar = uploadedAvatarData || profileAvatarSelect.value || '🎮';
+            const { data, error } = await supabaseClient.auth.signUp({
+              email, password,
+              options: { emailRedirectTo: window.location.href.split('#')[0], data: { nickname: nickname.slice(0,20), avatar: String(avatar).startsWith('data:image/') ? '🎮' : avatar } }
+            });
+            if (error) throw error;
+            if (data.session && data.user) {
+              await loadCloudProfile(data.user, true);
+              if (uploadedAvatarData && localProfile) { localProfile.avatar = uploadedAvatarData; await persistCloudProfile(); applySessionDefaults(); }
+              setAccountStatus('Tạo tài khoản thành công. Hồ sơ đã được lưu trên cloud.', 'success');
+            } else {
+              setAccountStatus('Đã gửi email xác nhận. Hãy mở hộp thư, xác nhận tài khoản rồi quay lại đăng nhập.', 'success');
+              setAuthMode('login');
+            }
+          } else {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            await loadCloudProfile(data.user, true);
+          }
+          authPasswordInput.value = '';
+          authPasswordConfirmInput.value = '';
+        } catch (error) {
+          console.error('Auth error:', error);
+          setAccountStatus(error.message || 'Không thể xác thực tài khoản. Vui lòng thử lại.', 'error');
+        } finally {
+          btnAuthSubmit.disabled = false;
+          btnAuthSubmit.textContent = authMode === 'signup' ? 'TẠO TÀI KHOẢN' : 'ĐĂNG NHẬP';
+          renderAccountState();
+        }
+      }
+
+      async function handlePasswordReset() {
+        if (!supabaseClient) { setAccountStatus(accountSetupMessage(), 'error'); return; }
+        const email = authEmailInput.value.trim().toLowerCase();
+        if (!email) { setAccountStatus('Nhập email trước để nhận liên kết đặt lại mật khẩu.', 'error'); authEmailInput.focus(); return; }
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+        if (error) setAccountStatus(error.message, 'error');
+        else setAccountStatus('Đã yêu cầu gửi liên kết đặt lại mật khẩu. Hãy kiểm tra email.', 'success');
+      }
+
+      btnAuthSubmit.addEventListener('click', handleAuthSubmit);
+      authTabLogin.addEventListener('click', () => { setAuthMode('login'); setAccountStatus(accountSetupMessage()); });
+      authTabSignup.addEventListener('click', () => { setAuthMode('signup'); setAccountStatus(accountSetupMessage()); });
+      btnAuthForgot.addEventListener('click', handlePasswordReset);
+      btnAuthGuest.addEventListener('click', closeAccountModal);
+      btnOpenAccount.addEventListener('click', openAccountModal);
+      btnOpenAccountLobby.addEventListener('click', openAccountModal);
+      btnCloseAccount.addEventListener('click', closeAccountModal);
+      accountModal.addEventListener('click', event => { if (event.target === accountModal) closeAccountModal(); });
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') closeAccountModal(); });
+      btnAuthLogout.addEventListener('click', async () => {
+        if (supabaseClient) {
+          const { error } = await supabaseClient.auth.signOut();
+          if (error) { setAccountStatus(error.message, 'error'); return; }
+        }
+        resetToGuestAfterSignOut();
+        closeAccountModal();
+      });
+
+      btnSaveProfile.addEventListener('click', async () => {
+        if (!authUser || !localProfile) return;
+        const nickname = profileNameInput.value.trim();
+        if (nickname.length < 2) { setAccountStatus('Tên hiển thị cần ít nhất 2 ký tự.', 'error'); profileNameInput.focus(); return; }
+        localProfile.name = nickname.slice(0,20);
+        localProfile.avatar = uploadedAvatarData || profileAvatarSelect.value || localProfile.avatar || '🎮';
+        sessionIdentity = { mode:'profile', name:localProfile.name, avatar:localProfile.avatar };
+        const saved = await persistCloudProfile();
+        applySessionDefaults();
+        setAccountStatus(saved ? 'Đã lưu thay đổi hồ sơ lên cloud.' : 'Không thể đồng bộ hồ sơ. Kiểm tra kết nối và RLS.', saved ? 'success' : 'error');
       });
 
       profileAvatarSelect.addEventListener('change', () => {
         uploadedAvatarData = null;
         setAvatarElement(profileAvatarPreview, profileAvatarSelect.value);
       });
-
       profileAvatarFile.addEventListener('change', () => {
         const file = profileAvatarFile.files && profileAvatarFile.files[0];
         if (!file) return;
         if (!/^image\/(png|jpeg|webp)$/.test(file.type) || file.size > 5 * 1024 * 1024) {
-          profileSaveStatus.textContent = 'Chọn ảnh PNG/JPG/WebP dung lượng dưới 5 MB.';
-          profileAvatarFile.value = '';
-          return;
+          setAccountStatus('Chọn ảnh PNG/JPG/WebP dung lượng dưới 5 MB.', 'error'); profileAvatarFile.value = ''; return;
         }
         const reader = new FileReader();
         reader.onload = () => {
           const image = new Image();
           image.onload = () => {
-            const canvasAvatar = document.createElement('canvas');
-            canvasAvatar.width = 128;
-            canvasAvatar.height = 128;
-            const avatarCtx = canvasAvatar.getContext('2d');
+            const avatarCanvas = document.createElement('canvas'); avatarCanvas.width = 128; avatarCanvas.height = 128;
+            const avatarCtx = avatarCanvas.getContext('2d');
             const scale = Math.max(128 / image.width, 128 / image.height);
-            const width = image.width * scale;
-            const height = image.height * scale;
-            avatarCtx.drawImage(image, (128 - width) / 2, (128 - height) / 2, width, height);
-            uploadedAvatarData = canvasAvatar.toDataURL('image/jpeg', 0.78);
+            avatarCtx.drawImage(image, (128 - image.width * scale) / 2, (128 - image.height * scale) / 2, image.width * scale, image.height * scale);
+            uploadedAvatarData = avatarCanvas.toDataURL('image/jpeg', 0.72);
             setAvatarElement(profileAvatarPreview, uploadedAvatarData);
-            profileSaveStatus.textContent = 'Đã chọn ảnh avatar. Nhấn lưu hồ sơ để áp dụng.';
+            setAccountStatus('Đã chọn avatar. Nhấn Lưu thay đổi hồ sơ để đồng bộ.', 'success');
           };
-          image.onerror = () => { profileSaveStatus.textContent = 'Không đọc được ảnh này.'; };
+          image.onerror = () => setAccountStatus('Không đọc được ảnh này.', 'error');
           image.src = reader.result;
         };
         reader.readAsDataURL(file);
       });
 
       function useQuickGuestIdentity() {
+        if (authUser) return;
         const name = lobbyQuickNameInput.value.trim() || 'Người chơi';
         const avatar = lobbyQuickAvatarSelect.value || '🎮';
         sessionIdentity = { mode: 'guest', name: name.slice(0, 24), avatar };
@@ -2021,6 +2472,28 @@
       }
       lobbyQuickNameInput.addEventListener('change', useQuickGuestIdentity);
       lobbyQuickAvatarSelect.addEventListener('change', useQuickGuestIdentity);
+
+      // Restore a previous cloud login on this device. Signing in on another
+      // device retrieves the same profile row from Supabase.
+      if (supabaseClient) {
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+          if (event === 'SIGNED_OUT') { resetToGuestAfterSignOut(); return; }
+          if (event === 'PASSWORD_RECOVERY') {
+            openAccountModal(); setAuthMode('recovery');
+            setAccountStatus('Nhập mật khẩu mới cho tài khoản của bạn.');
+            return;
+          }
+          if (session && session.user) Promise.resolve().then(() => loadCloudProfile(session.user));
+        });
+        supabaseClient.auth.getSession().then(({ data, error }) => {
+          if (error) { console.warn('Session restore:', error.message); return; }
+          if (data.session && data.session.user) loadCloudProfile(data.session.user, true);
+        });
+      } else {
+        setAccountStatus(accountSetupMessage());
+      }
+
+      applySessionDefaults();
 
       function addChatMessage(name, avatar, message, isSystem = false) {
         if (!chatMessages) return;
@@ -2050,7 +2523,7 @@
       function awardMatchXP(winnerSymbol, isDraw = false) {
         if (matchRewarded) return;
         matchRewarded = true;
-        if (sessionIdentity.mode !== 'profile' || !localProfile) return;
+        if (sessionIdentity.mode !== 'profile' || !localProfile || !authUser) return;
         const trackedSymbol = isOnline ? mySymbol : 'X';
         let gained = 0;
         if (isDraw) {
@@ -2065,11 +2538,14 @@
         }
         localProfile.games += 1;
         localProfile.xp += gained;
-        saveLocalProfile();
+        persistCloudProfile().then(saved => {
+          if (saved) setAccountStatus(`+${gained} XP đã đồng bộ cho ${localProfile.name}.`, 'success');
+        });
         applySessionDefaults();
         setStatus(`Kết thúc trận! Hồ sơ ${localProfile.name} nhận +${gained} XP.`, '');
       }
 
+      setAuthMode('login');
       applySessionDefaults();
 
       // =========================================================
