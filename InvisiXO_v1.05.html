@@ -7,9 +7,6 @@
   <title>Invisible Tic Tac Toe | Boardgame Hub</title>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <link rel="icon" type="image/jpeg" href="luckyrex.png">
-  
   <style>
     :root {
       --bg: #0f172a;
@@ -1792,7 +1789,7 @@
   <section class="board-section" data-matrix-ref="427948314b345255">
     <div class="board-topbar">
       <div class="title-badge">
-        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.04.5</small></span>
+        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.04.7</small></span>
         <span class="tag" id="axisModeTag">Hệ trục [-29:29]</span>
         <span class="tag-online hidden" id="onlineBadge">Online • Phòng: ---</span>
         <span class="game-credit game-credit-inline" style="margin:0 0 0 8px;">H1K4RU · HUD REXBI</span>
@@ -2359,8 +2356,8 @@
       function closeAccountModal() { accountModal.classList.add('hidden'); }
       function accountSetupMessage() {
         return supabaseClient
-          ? 'Đăng nhập bằng email và mật khẩu. Để tạo nick và vào game ngay, hãy tắt Confirm email trong Supabase Authentication > Sign In / Providers > Email.'
-          : 'Chưa cấu hình Supabase. Hãy điền URL dự án và publishable/anon key trong phần cấu hình ở đầu script, sau đó chạy game trên HTTPS hoặc localhost.';
+          ? 'Bạn có thể tạo tài khoản bằng email, mật khẩu và nickname. Nếu dự án bật xác nhận email, hãy mở thư xác nhận rồi quay lại website để đăng nhập.'
+          : 'Chưa cấu hình Supabase. Hãy kiểm tra Project URL và Publishable key trong phần cấu hình, sau đó chạy game trên HTTPS hoặc localhost.';
       }
       function setAuthMode(mode) {
         authMode = ['signup','recovery'].includes(mode) ? mode : 'login';
@@ -2609,10 +2606,21 @@
             if (error) throw error;
             if (data.session && data.user) {
               await loadCloudProfile(data.user, true);
+              if (!localProfile) {
+                setAccountStatus('Tài khoản đã được tạo và đăng nhập, nhưng chưa tải được hồ sơ cloud. Hãy kiểm tra bảng ttt_profiles và chính sách RLS.', 'error');
+                return;
+              }
               if (uploadedAvatarData && localProfile) { localProfile.avatar = uploadedAvatarData; await persistCloudProfile(); applySessionDefaults(); }
-              setAccountStatus('Tạo tài khoản thành công. Bạn đã đăng nhập ngay, không cần xác nhận email.', 'success');
+              setAccountStatus('Tạo tài khoản thành công và đã đăng nhập. Hồ sơ sẽ được lưu trên cloud.', 'success');
+            } else if (data.user) {
+              // Email confirmation is enabled: Supabase created the user but
+              // intentionally does not create a session until the email is verified.
+              authPasswordInput.value = '';
+              authPasswordConfirmInput.value = '';
+              setAuthMode('login');
+              setAccountStatus('Đã tạo tài khoản. Hãy mở hộp thư email, nhấn liên kết xác nhận của Supabase, sau đó quay lại website và đăng nhập bằng email/mật khẩu vừa tạo.', 'success');
             } else {
-              setAccountStatus('Supabase vẫn đang yêu cầu xác nhận email. Hãy tắt Confirm email tại Authentication > Sign In / Providers > Email trong Supabase rồi thử lại. Thiết lập này không thể thay đổi từ file HTML.', 'error');
+              setAccountStatus('Yêu cầu đăng ký đã được gửi. Hãy kiểm tra email của bạn; nếu đã có tài khoản, hãy thử đăng nhập.', 'success');
             }
           } else {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
