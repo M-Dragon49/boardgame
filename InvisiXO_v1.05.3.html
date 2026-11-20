@@ -2507,6 +2507,106 @@
       .reward-ad-progress-copy { align-items:flex-start; flex-direction:column; gap:3px; }
       .reward-ad-progress-copy span { text-align:left; }
     }
+  
+
+    /* v1.05.6: final mobile fixes — keep chat outside clipped control area. */
+    @media (max-width: 640px), (hover: none) and (pointer: coarse) {
+      .shift-hint { display: none !important; }
+    }
+    @media (max-width: 760px), (hover: none) and (pointer: coarse) {
+      #roomChatPanel:not(.hidden) {
+        position: fixed !important;
+        inset: auto max(8px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px)) !important;
+        z-index: 12000 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: auto !important;
+        height: min(58dvh, 480px) !important;
+        min-height: 225px !important;
+        max-height: calc(100dvh - 76px) !important;
+        box-sizing: border-box !important;
+        padding: 10px !important;
+        gap: 8px !important;
+        overflow: hidden !important;
+        isolation: isolate;
+      }
+      #roomChatPanel.hidden { display: none !important; }
+      #roomChatPanel #btnChatClose {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 32px !important;
+        min-width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        flex: 0 0 32px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        font-size: 0 !important;
+      }
+      #roomChatPanel #btnChatClose .chat-close-symbol { display: inline !important; font-size: 22px !important; line-height: 1 !important; }
+      #roomChatPanel #btnChatClose .chat-close-label { display: none !important; }
+      #roomChatPanel .room-chat-heading {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        min-height: 38px !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        margin: 0 !important;
+        padding: 0 0 7px !important;
+      }
+      #roomChatPanel #chatMessages {
+        display: flex !important;
+        flex: 1 1 auto !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        height: auto !important;
+        min-height: 96px !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 4px 2px 8px !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain !important;
+        -webkit-overflow-scrolling: touch !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      #roomChatPanel #chatMessages > .chat-message {
+        display: flex !important;
+        flex: 0 0 auto !important;
+        width: 100% !important;
+        min-height: 28px !important;
+        align-items: flex-start !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+      }
+      #roomChatPanel .chat-message-copy {
+        display: block !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        overflow-wrap: anywhere !important;
+        white-space: normal !important;
+        color: #e8f2f7 !important;
+        visibility: visible !important;
+      }
+      #roomChatPanel .chat-message-copy strong {
+        display: inline !important;
+        visibility: visible !important;
+      }
+      #roomChatPanel .chat-message-avatar { flex: 0 0 30px !important; }
+      #roomChatPanel .chat-form {
+        display: grid !important;
+        flex: 0 0 auto !important;
+        grid-template-columns: minmax(0, 1fr) 64px !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        margin: 0 !important;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -2515,7 +2615,7 @@
   <section class="board-section" data-matrix-ref="427948314b345255">
     <div class="board-topbar">
       <div class="title-badge">
-        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.5</small></span>
+        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.6</small></span>
         <span class="tag" id="axisModeTag">Hệ trục [-29:29]</span>
         <span class="tag-online hidden" id="onlineBadge">Online • Phòng: ---</span>
         <span class="game-credit game-credit-inline" style="margin:0 0 0 8px;">H1K4RU · HUD REXBI</span>
@@ -2932,6 +3032,29 @@
       const chatForm = document.getElementById('chatForm');
       const chatInput = document.getElementById('chatInput');
       const btnCancelLobby = document.getElementById('btnCancelLobby');
+
+      // On phones, the control bar uses backdrop-filter and scrolling. A fixed
+      // chat panel inside it can become clipped by that ancestor. Keep a home
+      // anchor so the panel can move to the viewport layer on mobile and return
+      // to its original DOM position when switching back to desktop width.
+      const chatPanelHomeAnchor = roomChatPanel
+        ? document.createComment('roomChatPanelHome')
+        : null;
+      if (chatPanelHomeAnchor && roomChatPanel.parentNode) {
+        roomChatPanel.parentNode.insertBefore(chatPanelHomeAnchor, roomChatPanel);
+      }
+      function syncChatPanelPlacement() {
+        if (!roomChatPanel || !chatPanelHomeAnchor || !chatPanelHomeAnchor.parentNode) return;
+        const isPhoneLayout = window.matchMedia('(max-width: 760px), (hover: none) and (pointer: coarse)').matches;
+        if (isPhoneLayout && roomChatPanel.parentElement !== document.body) {
+          document.body.appendChild(roomChatPanel);
+        } else if (!isPhoneLayout && roomChatPanel.parentElement === document.body) {
+          chatPanelHomeAnchor.parentNode.insertBefore(roomChatPanel, chatPanelHomeAnchor.nextSibling);
+        }
+      }
+      syncChatPanelPlacement();
+      window.addEventListener('resize', syncChatPanelPlacement, { passive: true });
+      window.addEventListener('orientationchange', syncChatPanelPlacement, { passive: true });
 
       const profileNameInput = document.getElementById('profileNameInput');
       const profileAvatarSelect = document.getElementById('profileAvatarSelect');
@@ -3784,8 +3907,14 @@
         btnChatToggle.textContent = open ? 'Đóng chat' : 'Mở chat phòng';
         btnChatToggle.setAttribute('aria-expanded', String(open));
         if (open) {
-          chatMessages.scrollTop = chatMessages.scrollHeight;
-          if (focusInput && window.matchMedia('(min-width: 641px)').matches) chatInput.focus();
+          const scrollChatToLatest = () => {
+            if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+          };
+          scrollChatToLatest();
+          // Moving the panel to <body> on phones changes its layout context;
+          // scroll again on the next frame so the latest message is visible.
+          if (typeof requestAnimationFrame === 'function') requestAnimationFrame(scrollChatToLatest);
+          if (focusInput && window.matchMedia('(min-width: 641px)').matches && chatInput) chatInput.focus();
         }
       }
 
