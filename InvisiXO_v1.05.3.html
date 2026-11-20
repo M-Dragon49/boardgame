@@ -2379,6 +2379,134 @@
       @keyframes friendly-chat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
     }
 
+
+    /* v1.05.5: chat layout + verified 10-second playback gate */
+    .chat-message-avatar,
+    .chat-toast-avatar {
+      flex: 0 0 30px !important;
+      width: 30px !important;
+      height: 30px !important;
+      min-width: 30px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      line-height: 1;
+    }
+    .chat-message-avatar img,
+    .chat-toast-avatar img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: inherit;
+    }
+    .chat-message-copy { min-width: 0; overflow-wrap: anywhere; }
+    .chat-message-copy strong { display: inline; }
+    /* Desktop already has the toolbar toggle, so don't duplicate a close button inside the panel. */
+    @media (min-width: 641px) {
+      #btnChatClose { display: none !important; }
+      .room-chat-heading { justify-content: flex-start; }
+    }
+    @media (max-width: 640px) {
+      .room-chat-panel:not(.hidden) {
+        position: fixed !important;
+        z-index: 12000 !important;
+        left: max(8px, env(safe-area-inset-left, 0px)) !important;
+        right: max(8px, env(safe-area-inset-right, 0px)) !important;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        width: auto !important;
+        height: min(58dvh, 480px) !important;
+        min-height: 225px !important;
+        max-height: calc(100dvh - 76px) !important;
+        padding: 10px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+        border-radius: 15px !important;
+      }
+      .room-chat-heading {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 8px !important;
+        min-height: 38px !important;
+        padding: 0 0 7px !important;
+        margin: 0 !important;
+      }
+      .room-chat-heading strong { flex: 1 1 auto !important; min-width: 0; }
+      .room-chat-heading span { display: none !important; }
+      /* Compact X close button on phones; the toolbar toggle can be outside the visible area. */
+      #btnChatClose {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 2 !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 32px !important;
+        min-width: 32px !important;
+        height: 32px !important;
+        min-height: 32px !important;
+        flex: 0 0 32px !important;
+        padding: 0 !important;
+        border-radius: 50% !important;
+        font-size: 0 !important;
+      }
+      #btnChatClose .chat-close-symbol { display: inline !important; font-size: 22px !important; line-height: 1 !important; }
+      #btnChatClose .chat-close-label { display: none !important; }
+      .chat-messages {
+        flex: 1 1 0 !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        overflow-x: hidden !important;
+        overflow-y: auto !important;
+        padding: 4px 2px 8px !important;
+      }
+      .chat-form { flex: 0 0 auto !important; min-width: 0; }
+    }
+
+    .reward-ad-overlay {
+      z-index: 15000 !important;
+      padding: max(14px, env(safe-area-inset-top, 0px)) 14px max(14px, env(safe-area-inset-bottom, 0px));
+      background: rgba(2, 8, 20, .88) !important;
+    }
+    .reward-ad-card {
+      width: min(560px, 100%);
+      max-height: calc(100dvh - 28px);
+      overflow-y: auto;
+      padding: clamp(14px, 3vw, 22px);
+      border: 1px solid rgba(125, 211, 252, .28);
+      border-radius: 18px;
+      background: linear-gradient(155deg, #1d3851, #102238 78%);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, .58);
+      color: #f3f8ff;
+    }
+    .reward-ad-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .reward-ad-kicker { color:#7dd3fc; font-size:.62rem; font-weight:900; letter-spacing:.16em; }
+    .reward-ad-heading h2 { margin-top:4px; font-size:clamp(1rem, 3vw, 1.25rem); }
+    .reward-ad-close { width:34px; height:34px; flex:0 0 34px; border:1px solid rgba(255,255,255,.2); border-radius:10px; background:rgba(255,255,255,.08); color:#fff; font-size:24px; line-height:1; cursor:pointer; }
+    .reward-ad-player-shell { width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:12px; background:#020617; border:1px solid rgba(148,163,184,.22); }
+    .reward-ad-player-shell iframe, .reward-ad-player-shell > div { display:block; width:100%; height:100%; }
+    .reward-ad-progress { margin-top:13px; }
+    .reward-ad-progress-copy { display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:7px; font-size:.76rem; }
+    .reward-ad-progress-copy strong { color:#a7f3d0; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .reward-ad-progress-copy span { color:#b7c8dc; text-align:right; }
+    .reward-ad-track { height:8px; overflow:hidden; border-radius:999px; background:rgba(148,163,184,.22); }
+    .reward-ad-track span { display:block; width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#38bdf8,#34d399); transition:width .15s linear; }
+    .reward-ad-actions { display:flex; align-items:center; gap:8px; margin-top:13px; }
+    .reward-ad-actions .btn-play { flex:1; min-height:43px; margin:0; }
+    .reward-ad-actions button:disabled { opacity:.48; cursor:not-allowed; }
+    .reward-ad-note { margin-top:10px; color:#9fb4ca; font-size:.68rem; line-height:1.45; }
+    @media (max-width:420px) {
+      .reward-ad-card { padding:13px; border-radius:15px; }
+      .reward-ad-progress-copy { align-items:flex-start; flex-direction:column; gap:3px; }
+      .reward-ad-progress-copy span { text-align:left; }
+    }
   </style>
 </head>
 <body>
@@ -2387,7 +2515,7 @@
   <section class="board-section" data-matrix-ref="427948314b345255">
     <div class="board-topbar">
       <div class="title-badge">
-        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.4</small></span>
+        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.5</small></span>
         <span class="tag" id="axisModeTag">Hệ trục [-29:29]</span>
         <span class="tag-online hidden" id="onlineBadge">Online • Phòng: ---</span>
         <span class="game-credit game-credit-inline" style="margin:0 0 0 8px;">H1K4RU · HUD REXBI</span>
@@ -2400,7 +2528,7 @@
         </button>
         <button type="button" class="btn-small hidden" id="btnOpenAdmin" title="Bảng điều khiển quản trị">⚙ ADMIN</button>
         <div class="coord-hover" id="hoverCoord">Tọa độ: (0, 0)</div>
-        <button class="btn-small reward-reveal-btn" id="btnWatchReveal" type="button" title="Mở video và nhận quyền soi bàn 2 giây">🎬 Soi bàn</button>
+        <button class="btn-small reward-reveal-btn" id="btnWatchReveal" type="button" title="Xem video đủ 10 giây để mở lượt soi bàn 2 giây">🎬 Soi bàn</button>
         <button class="btn-small" id="btnCenterOrigin" title="Cuộn về tâm O(0,0)">Về tâm O(0,0)</button>
         <button type="button" class="btn-lobby" id="btnBackLobby" title="Rời trận và về màn hình chính" aria-label="Rời trận và về màn hình chính"><span class="btn-lobby-icon" aria-hidden="true">⌂</span><span class="btn-lobby-label">Về sảnh</span></button>
       </div>
@@ -2493,6 +2621,27 @@
     </div>
   </section>
   <div class="chat-toast-stack" id="chatToastStack" aria-live="polite" aria-atomic="false"></div>
+  <div class="modal-overlay hidden reward-ad-overlay" id="rewardAdModal" role="presentation">
+    <section class="reward-ad-card" role="dialog" aria-modal="true" aria-labelledby="rewardAdTitle">
+      <header class="reward-ad-heading">
+        <div>
+          <span class="reward-ad-kicker">REWARD VIDEO</span>
+          <h2 id="rewardAdTitle">Xem video để mở lượt soi bàn</h2>
+        </div>
+        <button type="button" class="reward-ad-close" id="btnCloseRewardAd" aria-label="Đóng video" title="Đóng">×</button>
+      </header>
+      <div class="reward-ad-player-shell" id="rewardVideoHost"><div id="rewardVideoFrame"></div></div>
+      <div class="reward-ad-progress">
+        <div class="reward-ad-progress-copy"><strong id="rewardAdTime">0.0 / 10 giây</strong><span id="rewardAdStatus">Đang tải video…</span></div>
+        <div class="reward-ad-track" role="progressbar" aria-label="Thời gian xem video" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0"><span id="rewardAdProgressBar"></span></div>
+      </div>
+      <div class="reward-ad-actions">
+        <button type="button" class="btn-play" id="btnClaimReveal" disabled>Chưa đủ 10 giây</button>
+        <button type="button" class="btn-small hidden" id="btnReplayRewardAd">Phát lại video</button>
+      </div>
+      <p class="reward-ad-note">Chỉ tính thời gian khi video đang phát và trang game đang hiển thị. Tạm dừng hoặc chuyển sang tab khác sẽ không được cộng thời gian.</p>
+    </section>
+  </div>
 
   <!-- GAME.IO STYLE LOBBY -->
   <div class="modal-overlay lobby-overlay" id="setupModal">
@@ -2751,6 +2900,14 @@
       const hoverCoordEl = document.getElementById('hoverCoord');
       const btnCenterOrigin = document.getElementById('btnCenterOrigin');
       const btnWatchReveal = document.getElementById('btnWatchReveal');
+      const rewardAdModal = document.getElementById('rewardAdModal');
+      const rewardVideoHost = document.getElementById('rewardVideoHost');
+      const rewardAdTime = document.getElementById('rewardAdTime');
+      const rewardAdStatus = document.getElementById('rewardAdStatus');
+      const rewardAdProgressBar = document.getElementById('rewardAdProgressBar');
+      const btnClaimReveal = document.getElementById('btnClaimReveal');
+      const btnReplayRewardAd = document.getElementById('btnReplayRewardAd');
+      const btnCloseRewardAd = document.getElementById('btnCloseRewardAd');
       const btnBackLobby = document.getElementById('btnBackLobby');
       const startTurnOverlay = document.getElementById('startTurnOverlay');
       const startTurnLabel = document.getElementById('startTurnLabel');
@@ -3131,16 +3288,36 @@
         return { level: Math.floor(safeXp / 100) + 1, progress: safeXp % 100, remaining: 100 - (safeXp % 100) };
       }
 
+      function normalizeAvatarValue(avatar, fallback = '🎮') {
+        if (typeof avatar !== 'string') return fallback;
+        const value = avatar.trim();
+        if (!value) return fallback;
+        // Only accept the image formats produced by the profile uploader. A broken/oversized
+        // data URL must never be rendered as a long text string inside the chat avatar.
+        if (/^data:image\/(?:png|jpe?g|webp);base64,/i.test(value)) {
+          return value.length <= 240000 ? value : fallback;
+        }
+        if (/^data:image\//i.test(value)) return fallback;
+        return Array.from(value).length <= 24 ? value : fallback;
+      }
+
       function setAvatarElement(element, avatar) {
         if (!element) return;
+        const safeAvatar = normalizeAvatarValue(avatar);
         element.replaceChildren();
-        if (typeof avatar === 'string' && avatar.startsWith('data:image/') && avatar.length < 250000) {
+        if (safeAvatar.startsWith('data:image/')) {
           const img = document.createElement('img');
           img.alt = 'Avatar';
-          img.src = avatar;
+          img.decoding = 'async';
+          img.loading = 'lazy';
+          img.onerror = () => {
+            element.replaceChildren();
+            element.textContent = '🎮';
+          };
+          img.src = safeAvatar;
           element.appendChild(img);
         } else {
-          element.textContent = (typeof avatar === 'string' && avatar) ? avatar : '🎮';
+          element.textContent = safeAvatar;
         }
       }
 
@@ -3202,6 +3379,8 @@
 
       function applySessionDefaults() {
         sessionIdentity.name = normalizePlayerName(sessionIdentity.name || 'Người chơi');
+        sessionIdentity.avatar = normalizeAvatarValue(sessionIdentity.avatar);
+        if (isOnline && mySymbol) avatars[mySymbol] = sessionIdentity.avatar;
         if (localProfile) localProfile.name = normalizePlayerName(localProfile.name);
         if (p1Input) p1Input.value = sessionIdentity.name;
         if (p2Input && !p2Input.value) p2Input.value = 'Player 2';
@@ -4457,8 +4636,9 @@
         tempReveal = null;
         adRevealUntil = 0;
         adRevealUsed = false;
+        closeRewardAdModal();
         if (adRevealTimer) clearTimeout(adRevealTimer);
-        if (btnWatchReveal) { btnWatchReveal.disabled = false; btnWatchReveal.dataset.ready = ""; btnWatchReveal.textContent = "🎬 Soi bàn"; btnWatchReveal.classList.remove("ready"); }
+        if (btnWatchReveal) { btnWatchReveal.disabled = false; btnWatchReveal.textContent = "🎬 Soi bàn"; btnWatchReveal.classList.remove("ready"); }
         winningLine = [];
         collisionPoint = null;
         localRematchReady = false;
@@ -4737,9 +4917,10 @@
               return;
             }
             const senderName = normalizePlayerName(data.name || 'Đối thủ');
-            addChatMessage(senderName, data.avatar, incomingText);
+            const senderAvatar = normalizeAvatarValue(data.avatar, '💬');
+            addChatMessage(senderName, senderAvatar, incomingText);
             if (roomChatPanel.classList.contains('hidden')) {
-              showChatToast(senderName, incomingText, data.avatar || '💬', false);
+              showChatToast(senderName, incomingText, senderAvatar, false);
             }
           } else if (data.type === 'CHAT_WARNING') {
             showChatToast('Nhắc nhở', data.message || 'Bạn ơi lớn rồi, giữ mồm giữ miệng.', '⚠️', true);
@@ -5477,10 +5658,16 @@
           showChatToast('Chống spam', 'Bạn nhắn chậm lại một chút nhé.', '⚠️', true);
           return;
         }
+        const senderName = normalizePlayerName(sessionIdentity.name || players[mySymbol] || 'Người chơi');
+        const senderAvatar = normalizeAvatarValue(sessionIdentity.avatar || avatars[mySymbol] || '🎮');
+        if (mySymbol) {
+          players[mySymbol] = senderName;
+          avatars[mySymbol] = senderAvatar;
+        }
         const payload = {
           type: 'CHAT',
-          name: players[mySymbol] || sessionIdentity.name,
-          avatar: avatars[mySymbol] || sessionIdentity.avatar,
+          name: senderName,
+          avatar: senderAvatar,
           text: message
         };
         try {
@@ -5566,29 +5753,175 @@
       }
       addMinusShortcut(inputX); addMinusShortcut(inputY);
 
-      // Video YouTube là video hỗ trợ; trang tĩnh không thể xác minh người chơi đã xem đủ quảng cáo.
-      // Người chơi mở video trước, sau đó bấm lần nữa để kích hoạt soi bàn 2 giây (mỗi ván 1 lần).
-      if (btnWatchReveal) {
-        btnWatchReveal.addEventListener('click', () => {
-          if (adRevealUsed) { setStatus('Bạn đã sử dụng lượt soi bàn trong ván này.'); return; }
-          if (!btnWatchReveal.dataset.ready) {
-            window.open('https://www.youtube.com/watch?v=31xVndxpYX4', '_blank', 'noopener,noreferrer');
-            btnWatchReveal.dataset.ready = '1';
-            btnWatchReveal.classList.add('ready');
-            btnWatchReveal.textContent = '👁 Hiện bàn 2s';
-            setStatus('Video đã mở ở tab mới. Quay lại và nhấn “Hiện bàn 2s” để dùng lượt soi.');
-            return;
+      // Reward video: chỉ cộng thời gian khi YouTube báo đang phát và trang game đang hiển thị.
+      const REWARD_VIDEO_ID = '31xVndxpYX4';
+      const REWARD_WATCH_REQUIRED_MS = 10000;
+      let rewardYouTubeApiPromise = null;
+      let rewardVideoPlayer = null;
+      let rewardWatchTimer = null;
+      let rewardWatchMs = 0;
+      let rewardWatchLastAt = 0;
+      let rewardOpenToken = 0;
+
+      function loadRewardYouTubeApi() {
+        if (window.YT && typeof window.YT.Player === 'function') return Promise.resolve(window.YT);
+        if (rewardYouTubeApiPromise) return rewardYouTubeApiPromise;
+        rewardYouTubeApiPromise = new Promise((resolve, reject) => {
+          let settled = false;
+          const timeoutId = window.setTimeout(() => {
+            if (settled) return;
+            settled = true;
+            reject(new Error('Hết thời gian tải trình phát video.'));
+          }, 15000);
+          const previousReady = window.onYouTubeIframeAPIReady;
+          window.onYouTubeIframeAPIReady = () => {
+            try { if (typeof previousReady === 'function') previousReady(); } catch (_) {}
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeoutId);
+            resolve(window.YT);
+          };
+          let script = document.querySelector('script[src*="youtube.com/iframe_api"]');
+          if (!script) {
+            script = document.createElement('script');
+            script.src = 'https://www.youtube.com/iframe_api';
+            script.async = true;
+            script.dataset.invisixoYoutubeApi = '1';
+            script.onerror = () => {
+              if (settled) return;
+              settled = true;
+              window.clearTimeout(timeoutId);
+              reject(new Error('Không tải được trình phát YouTube.'));
+            };
+            document.head.appendChild(script);
           }
-          adRevealUsed = true;
-          adRevealUntil = performance.now() + 2000;
-          btnWatchReveal.disabled = true;
-          btnWatchReveal.textContent = '✓ Đã dùng';
-          drawBoard();
-          if (adRevealTimer) clearTimeout(adRevealTimer);
-          adRevealTimer = setTimeout(() => { adRevealUntil = 0; drawBoard(); }, 2050);
-          setStatus('Đã hiển thị toàn bộ vị trí X và O trong 2 giây!');
+        }).catch(error => {
+          rewardYouTubeApiPromise = null;
+          throw error;
         });
+        return rewardYouTubeApiPromise;
       }
+
+      function renderRewardWatchProgress() {
+        const progress = Math.min(100, (rewardWatchMs / REWARD_WATCH_REQUIRED_MS) * 100);
+        const seconds = Math.min(10, rewardWatchMs / 1000);
+        if (rewardAdTime) rewardAdTime.textContent = `${seconds.toFixed(1)} / 10 giây`;
+        if (rewardAdProgressBar) rewardAdProgressBar.style.width = `${progress}%`;
+        const track = rewardAdProgressBar && rewardAdProgressBar.parentElement;
+        if (track) track.setAttribute('aria-valuenow', String(Math.floor(seconds)));
+        const ready = rewardWatchMs >= REWARD_WATCH_REQUIRED_MS;
+        if (btnClaimReveal) {
+          btnClaimReveal.disabled = !ready;
+          btnClaimReveal.textContent = ready ? '✓ Nhận lượt soi bàn' : 'Chưa đủ 10 giây';
+        }
+        if (ready && rewardAdStatus) rewardAdStatus.textContent = 'Đã đủ thời gian xem. Bạn có thể nhận lượt soi bàn.';
+      }
+
+      function trackRewardVideoTime() {
+        if (!rewardAdModal || rewardAdModal.classList.contains('hidden')) return;
+        const now = performance.now();
+        let playerState = -1;
+        try { if (rewardVideoPlayer && typeof rewardVideoPlayer.getPlayerState === 'function') playerState = rewardVideoPlayer.getPlayerState(); } catch (_) {}
+        const playing = window.YT && window.YT.PlayerState && playerState === window.YT.PlayerState.PLAYING;
+        if (document.visibilityState === 'visible' && playing) {
+          if (rewardWatchLastAt) rewardWatchMs += Math.min(350, Math.max(0, now - rewardWatchLastAt));
+          rewardWatchLastAt = now;
+        } else {
+          // Pauses, buffering, and hidden tabs do not contribute to the 10-second requirement.
+          rewardWatchLastAt = 0;
+        }
+        rewardWatchMs = Math.min(REWARD_WATCH_REQUIRED_MS, rewardWatchMs);
+        renderRewardWatchProgress();
+        if (!playing && rewardWatchMs < REWARD_WATCH_REQUIRED_MS && rewardAdStatus && document.visibilityState === 'visible') {
+          if (playerState === -1) rewardAdStatus.textContent = 'Đang chuẩn bị video…';
+          else if (window.YT && window.YT.PlayerState && playerState === window.YT.PlayerState.PAUSED) rewardAdStatus.textContent = 'Video đang tạm dừng — thời gian không được cộng.';
+          else if (window.YT && window.YT.PlayerState && playerState === window.YT.PlayerState.BUFFERING) rewardAdStatus.textContent = 'Đang tải video…';
+        }
+      }
+
+      function closeRewardAdModal() {
+        rewardOpenToken += 1; // Invalidate a pending YouTube API/player initialization.
+        if (rewardWatchTimer) window.clearInterval(rewardWatchTimer);
+        rewardWatchTimer = null;
+        rewardWatchLastAt = 0;
+        if (rewardVideoPlayer) {
+          try { rewardVideoPlayer.destroy(); } catch (_) {}
+        }
+        rewardVideoPlayer = null;
+        if (rewardVideoHost) rewardVideoHost.innerHTML = '<div id="rewardVideoFrame"></div>';
+        if (rewardAdModal) rewardAdModal.classList.add('hidden');
+      }
+
+      async function openRewardAdModal() {
+        if (adRevealUsed) { setStatus('Bạn đã sử dụng lượt soi bàn trong ván này.'); return; }
+        closeRewardAdModal();
+        const openToken = ++rewardOpenToken;
+        rewardWatchMs = 0;
+        rewardWatchLastAt = 0;
+        renderRewardWatchProgress();
+        if (rewardAdStatus) rewardAdStatus.textContent = 'Đang tải video…';
+        if (btnReplayRewardAd) btnReplayRewardAd.classList.add('hidden');
+        if (rewardAdModal) rewardAdModal.classList.remove('hidden');
+        rewardWatchTimer = window.setInterval(trackRewardVideoTime, 200);
+        try {
+          await loadRewardYouTubeApi();
+          if (openToken !== rewardOpenToken || !rewardAdModal || rewardAdModal.classList.contains('hidden')) return;
+          rewardVideoPlayer = new window.YT.Player('rewardVideoFrame', {
+            width: '100%',
+            height: '100%',
+            videoId: REWARD_VIDEO_ID,
+            playerVars: { autoplay: 1, controls: 1, rel: 0, playsinline: 1, enablejsapi: 1, origin: window.location.origin },
+            events: {
+              onReady: event => {
+                if (rewardAdStatus) rewardAdStatus.textContent = 'Video sẵn sàng. Nhấn Play nếu video chưa tự phát.';
+                try { event.target.playVideo(); } catch (_) {}
+              },
+              onStateChange: event => {
+                rewardWatchLastAt = 0;
+                if (window.YT && event.data === window.YT.PlayerState.PLAYING) {
+                  if (rewardAdStatus) rewardAdStatus.textContent = 'Đang xem — giữ video phát liên tục đủ 10 giây.';
+                  if (btnReplayRewardAd) btnReplayRewardAd.classList.add('hidden');
+                } else if (window.YT && event.data === window.YT.PlayerState.ENDED && rewardWatchMs < REWARD_WATCH_REQUIRED_MS) {
+                  if (rewardAdStatus) rewardAdStatus.textContent = 'Video đã kết thúc trước khi đủ 10 giây. Hãy phát lại để hoàn tất.';
+                  if (btnReplayRewardAd) btnReplayRewardAd.classList.remove('hidden');
+                } else if (window.YT && event.data === window.YT.PlayerState.PAUSED && rewardWatchMs < REWARD_WATCH_REQUIRED_MS) {
+                  if (rewardAdStatus) rewardAdStatus.textContent = 'Video đang tạm dừng — thời gian không được cộng.';
+                }
+              },
+              onError: () => {
+                if (rewardAdStatus) rewardAdStatus.textContent = 'Không thể phát video. Hãy tải lại trang hoặc thử lại sau.';
+              }
+            }
+          });
+        } catch (error) {
+          if (rewardAdStatus) rewardAdStatus.textContent = error && error.message ? error.message : 'Không tải được video.';
+        }
+      }
+
+      if (btnWatchReveal) {
+        btnWatchReveal.addEventListener('click', openRewardAdModal);
+      }
+      if (btnCloseRewardAd) btnCloseRewardAd.addEventListener('click', closeRewardAdModal);
+      if (btnReplayRewardAd) btnReplayRewardAd.addEventListener('click', () => {
+        if (!rewardVideoPlayer) return;
+        try { rewardVideoPlayer.seekTo(0, true); rewardVideoPlayer.playVideo(); } catch (_) {}
+      });
+      if (btnClaimReveal) btnClaimReveal.addEventListener('click', () => {
+        if (adRevealUsed || rewardWatchMs < REWARD_WATCH_REQUIRED_MS) return;
+        adRevealUsed = true;
+        adRevealUntil = performance.now() + 2000;
+        closeRewardAdModal();
+        btnWatchReveal.disabled = true;
+        btnWatchReveal.textContent = '✓ Đã dùng';
+        btnWatchReveal.classList.remove('ready');
+        drawBoard();
+        if (adRevealTimer) clearTimeout(adRevealTimer);
+        adRevealTimer = setTimeout(() => { adRevealUntil = 0; drawBoard(); }, 2050);
+        setStatus('Đã xem video đủ 10 giây và mở toàn bộ vị trí X, O trong 2 giây!');
+      });
+      document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && rewardAdModal && !rewardAdModal.classList.contains('hidden')) closeRewardAdModal();
+      });
 
       btnBackLobby.addEventListener('click', returnToLobby);
       btnCancelLobby.addEventListener('click', () => {
