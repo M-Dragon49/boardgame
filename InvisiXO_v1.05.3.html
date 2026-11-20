@@ -7,7 +7,6 @@
   <title>Invisible Tic Tac Toe | Boardgame Hub</title>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="icon" type="image/jpeg" href="luckyrex.png">
   <style>
     :root {
       --bg: #0f172a;
@@ -2089,6 +2088,297 @@
       *,*::before,*::after { scroll-behavior:auto !important; transition-duration:.01ms !important; }
     }
 
+  
+
+    /* =========================================================
+       v1.05.4 FRIENDLY BLUE / MINT THEME + CHAT CLOSE FIX
+       Calm slate-blue surfaces, softer teal/coral accents, readable contrast.
+       ========================================================= */
+    :root {
+      color-scheme: dark;
+      --bg: #142a3e;
+      --panel: #20394f;
+      --panel-light: #304d65;
+      --text: #f4f8fb;
+      --muted: #c1d0dc;
+      --x-color: #f18b96;
+      --o-color: #79c8e8;
+      --accent: #72d6b4;
+      --warn: #f3c77d;
+      --border: rgba(190, 215, 232, .26);
+      --ui-shadow: 0 16px 42px rgba(4, 17, 30, .22);
+    }
+    body {
+      background:
+        radial-gradient(ellipse at 10% 0%, rgba(121, 200, 232, .13), transparent 36%),
+        radial-gradient(ellipse at 92% 88%, rgba(114, 214, 180, .10), transparent 38%),
+        linear-gradient(145deg, #142a3e 0%, #1a344a 52%, #142a3e 100%);
+    }
+    .board-section {
+      background: linear-gradient(180deg, rgba(31, 57, 78, .98), rgba(20, 42, 62, .99));
+      border-bottom-color: rgba(190, 215, 232, .24);
+    }
+    .board-topbar, .control-section {
+      background: rgba(29, 53, 73, .97) !important;
+      border-color: rgba(190, 215, 232, .22) !important;
+      color: var(--text);
+    }
+    .title-badge, .board-tools { color: #f0f6fa; }
+    .title-badge .game-credit { color: #b7d1df !important; }
+    .coord-hover {
+      color: #f4f8fb;
+      background: #2a4861;
+      border-color: rgba(190, 215, 232, .28);
+    }
+    .btn-small {
+      color: #f4f8fb;
+      background: #35536d;
+      border-color: rgba(190, 215, 232, .30);
+    }
+    .btn-small:hover { background: #42647e; }
+    .player-card {
+      background: rgba(38, 65, 87, .92);
+      border-color: rgba(190, 215, 232, .18);
+    }
+    .player-card.active-x {
+      background: rgba(241, 139, 150, .13);
+      border-color: rgba(241, 139, 150, .8);
+      box-shadow: 0 0 0 1px rgba(241, 139, 150, .14), 0 0 18px rgba(241, 139, 150, .10);
+    }
+    .player-card.active-o {
+      background: rgba(121, 200, 232, .13);
+      border-color: rgba(121, 200, 232, .8);
+      box-shadow: 0 0 0 1px rgba(121, 200, 232, .14), 0 0 18px rgba(121, 200, 232, .10);
+    }
+    .coord-field {
+      background: rgba(19, 43, 63, .92) !important;
+      border-color: rgba(190, 215, 232, .28) !important;
+    }
+    .coord-field label { color: #c1d5e2; }
+    .coord-field input { color: #f7fbff !important; }
+    .coord-minus { background: #3a5a72; color: #fff; border-color: rgba(190, 215, 232, .30); }
+    .btn-play {
+      background: linear-gradient(135deg, #62d3b0, #39b995) !important;
+      color: #103b3a !important;
+      box-shadow: 0 7px 18px rgba(57, 185, 149, .20);
+    }
+    .status-msg { color: #c8d7e2 !important; }
+    .status-msg #moveCounter { color: #e1edf4 !important; }
+
+    .modal-overlay {
+      background: rgba(8, 20, 33, .78);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .modal-card, .account-card, .admin-settings-card {
+      background: linear-gradient(155deg, #29475f, #20394f 76%) !important;
+      border-color: rgba(190, 215, 232, .28) !important;
+      color: #f4f8fb;
+      box-shadow: 0 24px 65px rgba(4, 17, 30, .38);
+    }
+    .modal-card h1, .modal-card h2, .modal-card h3,
+    .account-card h1, .account-card h2, .admin-settings-card h1,
+    .admin-settings-card h2 { color: #f7fbff; }
+    .modal-card p, .account-card p { color: #c9d8e3; }
+    .rules-box, .online-box {
+      background: rgba(19, 42, 61, .82) !important;
+      border-color: rgba(190, 215, 232, .22) !important;
+      color: #dce8ef;
+    }
+    .form-group label, .account-field label { color: #d9e7ef !important; }
+    .form-group input, .account-field input, .account-field select,
+    .profile-editor input, .profile-select, .guest-row input,
+    .admin-settings-grid select, .admin-mode-threshold-grid input {
+      color: #f7fbff !important;
+      background: #18334b !important;
+      border-color: rgba(190, 215, 232, .30) !important;
+    }
+    input::placeholder { color: #a8bfce !important; opacity: 1; }
+    .playtype-tabs, .lobby-mode-tabs, .room-visibility-toggle {
+      background: rgba(17, 39, 57, .9) !important;
+      border-color: rgba(190, 215, 232, .22) !important;
+    }
+    .playtype-tab { color: #c4d6e1; }
+    .playtype-tab.active {
+      color: #123a4c !important;
+      background: linear-gradient(135deg, #89d9e9, #73d8c0) !important;
+    }
+    .mode-btn { color: #d9e8f0; background: #1b3a52; border-color: rgba(190, 215, 232, .25); }
+    .mode-btn.active { color: #f7fbff; background: rgba(121, 200, 232, .16); border-color: #79c8e8; }
+    .lobby-shell {
+      background:
+        radial-gradient(ellipse at 8% 0%, rgba(121, 200, 232, .13), transparent 36%),
+        radial-gradient(ellipse at 95% 95%, rgba(114, 214, 180, .10), transparent 36%),
+        linear-gradient(145deg, #203e56, #18334a 78%) !important;
+      border-color: rgba(151, 205, 222, .34) !important;
+    }
+    .lobby-main-card, .lobby-side-card, .lobby-rules-drawer, .public-rooms-box {
+      background: rgba(43, 70, 91, .95) !important;
+      border-color: rgba(190, 215, 232, .27) !important;
+      box-shadow: 0 10px 26px rgba(4, 17, 30, .16);
+      color: #f1f7fa;
+    }
+    .lobby-section-head h2, .lobby-side-card strong,
+    .lobby-rules-drawer summary strong { color: #f5fafc !important; }
+    .lobby-section-head p, .lobby-hero-copy p, .public-rooms-note,
+    .lobby-side-card p, .lobby-rules-drawer summary small,
+    .lobby-hero-copy .lobby-eyebrow { color: #c4d7e2 !important; }
+    .lobby-form .form-group label, .lobby-online-panel .form-group label { color: #e5f0f5 !important; }
+    .lobby-form input, .lobby-online-panel input, .online-box input {
+      color: #f7fbff !important;
+      background: #18334a !important;
+      border-color: rgba(190, 215, 232, .30) !important;
+    }
+    .lobby-mode-tabs, .room-visibility-toggle { background: rgba(20, 43, 62, .92) !important; }
+    .public-room-entry {
+      background: linear-gradient(100deg, rgba(82, 190, 166, .16), rgba(105, 174, 215, .16)) !important;
+      border-color: rgba(121, 200, 232, .34) !important;
+      color: #f3f9fc !important;
+    }
+    .public-room-entry small { color: #9be3d5 !important; }
+    .profile-hub, .profile-overview, .profile-stats div {
+      background: rgba(20, 43, 62, .72) !important;
+      border-color: rgba(190, 215, 232, .22) !important;
+    }
+    .profile-hub-heading h2, .profile-overview-copy strong,
+    .profile-stats strong { color: #f4f9fc !important; }
+    .profile-hub-heading p, .profile-overview-copy > span,
+    .profile-overview-copy small, .profile-stats span,
+    .profile-local-note { color: #bfd2de !important; }
+    .account-tabs button { color: #d6e5ed; }
+    .account-tabs button.active { background: rgba(121, 200, 232, .18); color: #effaff; }
+    .account-submit { color: #123b3a !important; background: linear-gradient(135deg, #75d9bf, #4fc6a6) !important; }
+    .admin-chat-toggle, .admin-mode-thresholds {
+      color: #e6f0f5 !important;
+      background: rgba(18, 42, 61, .76) !important;
+      border-color: rgba(190, 215, 232, .23) !important;
+    }
+    .admin-mode-thresholds h3 { color: #e6f0f5 !important; }
+    .admin-settings-note { color: #bed0dc !important; }
+    .lobby-current-player, .profile-chip {
+      background: rgba(48, 77, 101, .90) !important;
+      border-color: rgba(190, 215, 232, .27) !important;
+    }
+    .lobby-current-copy strong, .profile-chip-copy strong { color: #f5f9fc !important; }
+    .lobby-current-copy small, .profile-chip-copy small { color: #9bd8e8 !important; }
+
+    /* Chat window: pin the header and make the close action impossible to miss. */
+    .room-chat-panel {
+      color: #f2f8fb !important;
+      background: linear-gradient(155deg, #294a63, #203c54) !important;
+      border: 1px solid rgba(166, 213, 230, .42) !important;
+      box-shadow: 0 18px 52px rgba(3, 15, 27, .42) !important;
+    }
+    .room-chat-heading {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      flex: 0 0 auto;
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 2px 0 9px;
+      border-bottom: 1px solid rgba(190, 215, 232, .22);
+      background: linear-gradient(155deg, #294a63, #27465e);
+    }
+    .room-chat-heading strong { color: #f5fbff !important; font-size: .88rem; }
+    .room-chat-heading span { color: #bfd2de !important; }
+    .chat-close {
+      display: inline-flex !important;
+      visibility: visible !important;
+      opacity: 1 !important;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      flex: 0 0 auto;
+      width: auto !important;
+      min-width: 72px;
+      height: 40px !important;
+      min-height: 40px;
+      padding: 0 10px;
+      border: 1px solid rgba(255, 255, 255, .35) !important;
+      border-radius: 11px !important;
+      color: #153e4c !important;
+      background: linear-gradient(135deg, #a8e7e2, #85d6c2) !important;
+      box-shadow: 0 4px 14px rgba(8, 25, 39, .22);
+      font-size: .76rem !important;
+      line-height: 1;
+      font-weight: 900;
+      cursor: pointer;
+      pointer-events: auto !important;
+      touch-action: manipulation;
+    }
+    .chat-close:hover, .chat-close:focus-visible { filter: brightness(1.06); outline: 2px solid #d9fff5; outline-offset: 2px; }
+    .chat-close-symbol { font-size: 1.45rem; line-height: .8; }
+    .chat-close-label { font-size: .72rem; }
+    .chat-messages { scrollbar-width: thin; scrollbar-color: #7998ad transparent; }
+    .chat-message { color: #e8f2f7 !important; }
+    .chat-message-copy strong { color: #9de4e4 !important; }
+    .chat-message-avatar { border: 1px solid rgba(190, 215, 232, .25); }
+    .chat-form { border-top-color: rgba(190, 215, 232, .24) !important; }
+    .chat-form input {
+      color: #f4f9fc !important;
+      background: #19364e !important;
+      border-color: rgba(190, 215, 232, .34) !important;
+    }
+    .chat-toast {
+      color: #f4f9fc;
+      background: linear-gradient(145deg, #34556d, #28465e) !important;
+      border-color: rgba(169, 214, 231, .38) !important;
+    }
+    .chat-toast-copy strong { color: #a8e7e2 !important; }
+    .gameover-banner { background: rgba(29, 55, 75, .97) !important; }
+    .tab-guard-overlay { background: rgba(13, 30, 45, .94) !important; }
+    .tab-guard-card { background: linear-gradient(145deg, #34536a, #20394f) !important; border-color: rgba(241, 139, 150, .45) !important; }
+    .tab-guard-card h2 { color: #fff !important; }
+    .tab-guard-card p { color: #e1edf3 !important; }
+
+    @media (max-width: 640px) {
+      .room-chat-panel {
+        z-index: 9990 !important;
+        left: 8px !important;
+        right: 8px !important;
+        bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+        height: min(54dvh, 440px) !important;
+        max-height: calc(100dvh - 78px) !important;
+        padding: 9px 10px 10px !important;
+        overflow: hidden !important;
+        border-radius: 16px !important;
+      }
+      .room-chat-heading {
+        position: sticky !important;
+        top: 0 !important;
+        min-height: 48px !important;
+        padding: 2px 0 8px !important;
+        margin-bottom: 2px;
+      }
+      .room-chat-heading span { display: none !important; }
+      .room-chat-heading strong { display: block !important; flex: 1 1 auto !important; font-size: .86rem !important; }
+      #btnChatClose {
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        position: relative !important;
+        z-index: 20 !important;
+        width: 74px !important;
+        min-width: 74px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        flex: 0 0 74px !important;
+      }
+      .chat-close-label { display: inline !important; }
+      .chat-messages { min-height: 0 !important; flex: 1 1 auto !important; }
+      .chat-form { flex: 0 0 auto !important; }
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .room-chat-panel:not(.hidden) { animation: friendly-chat-in .2s ease-out both; }
+      .chat-close { transition: transform .16s ease, filter .16s ease, box-shadow .16s ease; }
+      .chat-close:active { transform: scale(.96); }
+      @keyframes friendly-chat-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    }
+
   </style>
 </head>
 <body>
@@ -2097,7 +2387,7 @@
   <section class="board-section" data-matrix-ref="427948314b345255">
     <div class="board-topbar">
       <div class="title-badge">
-        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.3</small></span>
+        <span>Tic Tac Toe Tàng Hình <small class="version-mark">v1.05.4</small></span>
         <span class="tag" id="axisModeTag">Hệ trục [-29:29]</span>
         <span class="tag-online hidden" id="onlineBadge">Online • Phòng: ---</span>
         <span class="game-credit game-credit-inline" style="margin:0 0 0 8px;">H1K4RU · HUD REXBI</span>
@@ -2193,7 +2483,7 @@
       <div class="room-chat-heading">
         <strong>Trò chuyện trong phòng</strong>
         <span>Tin nhắn chỉ tồn tại trong phiên chơi</span>
-        <button type="button" class="chat-close" id="btnChatClose" aria-label="Đóng cửa sổ chat" title="Đóng chat">×</button>
+        <button type="button" class="chat-close" id="btnChatClose" aria-label="Đóng cửa sổ chat" title="Đóng chat"><span class="chat-close-symbol" aria-hidden="true">×</span><span class="chat-close-label">Đóng</span></button>
       </div>
       <div class="chat-messages" id="chatMessages" aria-live="polite"></div>
       <form class="chat-form" id="chatForm" autocomplete="off">
@@ -5154,7 +5444,20 @@
       btnChatToggle.addEventListener('click', () => {
         setChatOpen(roomChatPanel.classList.contains('hidden'), true);
       });
-      if (btnChatClose) btnChatClose.addEventListener('click', () => setChatOpen(false));
+      if (btnChatClose) btnChatClose.addEventListener('click', event => {
+        event.preventDefault();
+        event.stopPropagation();
+        setChatOpen(false);
+      });
+      // Mobile fallback: tapping outside the chat panel closes it. The toggle
+      // button is excluded so a tap can still open/close the panel normally.
+      document.addEventListener('pointerdown', event => {
+        if (!window.matchMedia('(max-width: 640px)').matches) return;
+        if (!roomChatPanel || roomChatPanel.classList.contains('hidden')) return;
+        if (roomChatPanel.contains(event.target)) return;
+        if (btnChatToggle && (event.target === btnChatToggle || btnChatToggle.contains(event.target))) return;
+        setChatOpen(false);
+      }, { passive: true });
       document.addEventListener('keydown', event => {
         if (event.key === 'Escape' && !roomChatPanel.classList.contains('hidden')) setChatOpen(false);
       });
